@@ -44,11 +44,23 @@ async function demarrer({ fichiers = {}, env = {}, options = {} } = {}) {
         return { statut: r.status, json, texte, entetes: r.headers };
     }
 
+    /**
+     * Nouveau navigateur : obtient un cookie ft_v (première page) puis renvoie une fonction d'appel qui l'envoie.
+     * Deux navigateurs = deux auteurs distincts pour les contributions.
+     */
+    async function navigateur() {
+        const r = await appel('GET', '/');
+        const cookie = r.entetes.get('set-cookie').split(';')[0];
+        const appelNavigateur = (methode, url, corps, entetes = {}) => appel(methode, url, corps, { Cookie: cookie, ...entetes });
+        appelNavigateur.cookie = cookie;
+        return appelNavigateur;
+    }
+
     function fermer() {
         serveur.close();
         fs.rmSync(racine, { recursive: true, force: true });
     }
-    return { config, app, appel, fermer, dossier, racine, base };
+    return { config, app, appel, navigateur, fermer, dossier, racine, base };
 }
 
 /** Attend que les écritures de journaux (asynchrones, après la réponse) soient faites. */

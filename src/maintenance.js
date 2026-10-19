@@ -1,12 +1,13 @@
 'use strict';
 
 // Tâches quotidiennes, lancées au démarrage puis toutes les heures (chacune ne fait rien si c'est déjà fait) :
-// sauvegarde de data/, rotation des sauvegardes, agrégats statistiques, purge des journaux bruts de plus de 13 mois.
+// sauvegarde de data/, rotation des sauvegardes, agrégats statistiques, purge des journaux bruts et des présences
+// de plus de 13 mois, seuils d'archivage automatique des établissements (le temps qui passe compte).
 
 const { sauvegarderSiNecessaire, rotation } = require('./sauvegarde');
 const { dateLocale } = require('./statistiques');
 
-async function maintenanceQuotidienne({ config, statistiques, journal = console }, jour = dateLocale(new Date())) {
+async function maintenanceQuotidienne({ config, statistiques, contributions, journal = console }, jour = dateLocale(new Date())) {
     const bilan = {};
     const etape = async (nom, tache) => {
         try {
@@ -20,6 +21,10 @@ async function maintenanceQuotidienne({ config, statistiques, journal = console 
     await etape('rotation', () => rotation(config, jour));
     await etape('agregats', async () => { await statistiques.mettreAJourAgregats(jour); return true; });
     await etape('purge', () => statistiques.purger(jour));
+    if (contributions) {
+        await etape('presences', () => contributions.purgerPresences(jour));
+        await etape('seuils', () => contributions.appliquerSeuils());
+    }
 
     if (bilan.sauvegarde) journal.log(`Sauvegarde du jour : ${bilan.sauvegarde}`);
     if (bilan.rotation && bilan.rotation.length) journal.log(`Anciennes sauvegardes supprimées : ${bilan.rotation.join(', ')}`);
@@ -29,6 +34,10 @@ async function maintenanceQuotidienne({ config, statistiques, journal = console 
     if ((purge.supprimes || []).length || (purge.reecrits || []).length) {
         journal.log(`Journaux antérieurs au ${purge.limite} purgés (${[...purge.supprimes, ...purge.reecrits].length} fichier(s)).`);
     }
+    const presences = bilan.presences || {};
+    if (presences.raison) journal.error(`Purge des présences reportée : ${presences.raison}`);
+    if (presences.supprimees) journal.log(`Présences antérieures au ${presences.limite} purgées (${presences.supprimees} ligne(s)).`);
+    for (const c of bilan.seuils || []) journal.log(`Statut automatique : « ${c.nom} » ${c.avant} -> ${c.apres}.`);
     return bilan;
 }
 

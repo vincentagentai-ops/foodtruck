@@ -91,10 +91,14 @@ function charger(env = process.env) {
             destinataire: env.MAIL_TO || env.CONTACT_EMAIL || '',
         },
         trustProxy: trustProxy.valeur,
+        // Écritures acceptées uniquement depuis les pages du site : en-tête Origin égal à l'hôte demandé, ou à l'un
+        // de ces hôtes (nom ou nom:port, séparés par des virgules ; utile derrière un proxy qui change l'hôte)
+        hotesAutorises: String(env.HOTES_AUTORISES || '').split(',').map(h => h.trim().toLowerCase()).filter(Boolean),
         // Limites de fréquence des écritures publiques, par navigateur et par heure (par IP : × LIMITE_FACTEUR_IP)
         limites: {
             suggestions: entier(env.LIMITE_SUGGESTIONS, 20),
             evenements: entier(env.LIMITE_EVENEMENTS, 600),
+            contributions: entier(env.LIMITE_CONTRIBUTIONS, 60), // ajouts, modifications, avis, présences, signalements
             facteurIp: Math.max(1, entier(env.LIMITE_FACTEUR_IP, 5)),
         },
         journaliserAcces: env.ACCESS_LOG !== 'false',

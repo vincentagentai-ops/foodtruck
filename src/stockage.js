@@ -47,6 +47,8 @@ class Stockage {
     constructor(config) {
         this.config = config;
         this.file = Promise.resolve();
+        this.caches = new Map(); // fichiers JSONL des contributions gardés en mémoire
+        this.generation = 0; // augmente à chaque changement d'un fichier en cache
     }
 
     /** Exécute `tache` après les écritures précédentes. */
@@ -169,6 +171,45 @@ class Stockage {
     /** Ajoute une ligne de journal (JSON par ligne). */
     journaliser(fichier, entree) {
         return fs.appendFile(fichier, JSON.stringify(entree) + '\n', 'utf8');
+    }
+
+    /**
+     * Lignes d'un fichier JSONL gardées en mémoire : { lignes, generation }. Le fichier est relu si sa date de
+     * modification ou sa taille a changé (modification à la main, restauration d'une sauvegarde).
+     */
+    async lireLignes(fichier) {
+        const info = await fs.stat(fichier).catch(err => {
+            if (err.code === 'ENOENT') return null;
+            throw err;
+        });
+        const signature = info ? `${info.mtimeMs}:${info.size}` : 'absent';
+        const existant = this.caches.get(fichier);
+        if (existant && existant.signature === signature) return existant;
+        const cache = { signature, lignes: info ? await this.lireJournal(fichier) : [], generation: ++this.generation };
+        this.caches.set(fichier, cache);
+        return cache;
+    }
+
+    /** Ajoute une ligne à un fichier JSONL en ajout seul. À appeler dans `enSerie` (voir `ajouterEvenement`). */
+    async ajouterLigne(fichier, objet) {
+        const cache = await this.lireLignes(fichier);
+        const texte = JSON.stringify(objet);
+        await fs.appendFile(fichier, texte + '\n', 'utf8');
+        const info = await fs.stat(fichier);
+        cache.lignes.push(JSON.parse(texte));
+        cache.signature = `${info.mtimeMs}:${info.size}`;
+        cache.generation = ++this.generation;
+    }
+
+    /** Ajoute une ligne à un fichier JSONL, dans la file d'attente des écritures. */
+    ajouterEvenement(fichier, objet) {
+        return this.enSerie(() => this.ajouterLigne(fichier, objet));
+    }
+
+    /** Réécrit entièrement un fichier JSONL (purge par l'administrateur). À appeler dans `enSerie`. */
+    async reecrireLignes(fichier, lignes) {
+        await this.ecrireTexte(fichier, lignes.map(l => JSON.stringify(l) + '\n').join(''));
+        this.caches.delete(fichier);
     }
 
     async lireJournal(fichier) {

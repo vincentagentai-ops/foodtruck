@@ -1,20 +1,20 @@
-id,nom,type,cuisine,categorie,etiquettes,jours,lieu,horaires,prix,paiements,site,emplacement,statut,cree_le,maj_le,version
-fvbfrj,Neki Neko,foodtruck,Japonais,Asiatique,,Mardi,,,10-15,,https://nekinekofood31.wixsite.com/site,https://maps.app.goo.gl/CBVJ7CwHx8bk3SFk8,actif,,,1
-n4qjfs,Libanais,foodtruck,Libanais,Libanaise / Orientale,,Jeudi,,,10-15,,,https://maps.app.goo.gl/7SqDcNNdjZi1DxSb8,actif,,,1
-zdgzr4,Crêperie Doc Krampouz,foodtruck,Crêpes,Crêpes,,Mardi;Jeudi,,,9-12,,,https://maps.app.goo.gl/5PywqdFLqH58vRgM7,actif,,,1
-ze9vbu,L'épicurieux,foodtruck,Bagel,Sandwichs / Bagels,,Mercredi,,,12,,https://www.lepicurieux.net/,https://maps.app.goo.gl/V6bXfQe4PXJ1y4s76,actif,,,1
-76z85s,L'épicurieux,foodtruck,Bagel,Sandwichs / Bagels,,Jeudi,,,12,,https://www.lepicurieux.net/,https://maps.app.goo.gl/tD6EdmYzDJneNAGh9,actif,,,1
-utehrn,Ô Tuk Tuk,foodtruck,Asiatique,Asiatique,,Mercredi,,,10-15,,https://otuktuk.fr/,https://maps.app.goo.gl/UBn3AWEDEui95YuR9,actif,,,1
-fxfyz9,Rosemund,foodtruck,Africain,Africaine,,Vendredi,,,10-15,,,https://maps.app.goo.gl/7SqDcNNdjZi1DxSb8,actif,,,1
-sewggy,Bibim Pop,foodtruck,Coréen,Asiatique,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,7 à 12,,https://www.bibimpop.fr/,https://maps.app.goo.gl/zRiMijYwyYRWGxnU8,actif,,,1
-pa74vh,Pizza Maestro,foodtruck,Pizza,Italienne / Pizza,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,8 à 20,,https://pizzamaestrobasso.wixsite.com/pizzamaestrofr,https://maps.app.goo.gl/osxHTAmxmBq3mAwy5,actif,,,1
-dm6nm2,So Piad’In,foodtruck,Pizza roulée,Italienne / Pizza,,Jeudi,,,10,,https://wefoodtruck.fr/food-trucks/so-piadin-food-truck-toulouse-italien-evenement/,https://maps.app.goo.gl/v4bo9gLWiiaMzNpk8,actif,,,1
-ffzwtz,Grill Truck,foodtruck,Grillades,Grillades,,Jeudi,,,10-15,,https://legrilltruck.com/la-carte/,https://maps.app.goo.gl/NK8QJSaoFYfszxq68,actif,,,1
-zdm9p9,Spice Box,foodtruck,Indien,Indienne,,Lundi,,,,,https://www.spicebox.fr/general-3,https://maps.app.goo.gl/rDjvEgcabAxqhwJh6,actif,,,1
-aphbyt,Moya,foodtruck,Mexicain,Mexicaine,,Mercredi,,,,,https://fr.restaurantguru.com/Moya-Mexican-Street-Food-Toulouse,https://maps.app.goo.gl/NK8QJSaoFYfszxq68,actif,,,1
-96q258,Tartine & Lulu,foodtruck,Tartines / Cuisine maison,Sandwichs / Bagels,,Mardi,,,,,https://www.facebook.com/TartineLulu/?locale=fr_FR,https://maps.app.goo.gl/gJqj7wHE6Q1nUVfx6,actif,,,1
-zf5gyj,Ban Thai,foodtruck,Thailandais,Asiatique,,Lundi,,,10 à 15,,,https://maps.app.goo.gl/mis2ZqEpMAhC9Aey5,actif,,,1
-xdr9kx,CamiHong,foodtruck,Vietnamien,Asiatique,,Jeudi,,,9 à 12,,https://www.camihong.fr,https://maps.app.goo.gl/1mRwHsU2dXF3S8fN6,actif,,,1
-mjs3xj,Les canailles,foodtruck,grillades,Grillades,,Lundi,,,10-15,,https://www.lescanaillestoulouse.com/,https://maps.app.goo.gl/bkB33LhjKXy5C5Wn6,actif,,,1
-mv54de,Ladilafé,foodtruck,Créole,Créole,,Mardi,,,10-20,,https://www.ladilafe.net/,https://maps.app.goo.gl/tkqjVUT5quqNnAfv8,actif,,,1
-kqx2dh,Pickles Salad Bar,foodtruck,Salad bar,Salades,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,10-15,,,https://maps.app.goo.gl/wzFZKqFkimNRwoxB6,actif,,,1
+id,nom,type,cuisine,categorie,etiquettes,jours,lieu,horaires,prix,paiements,site,emplacement,statut,cree_le,maj_le,version,lieux_jours
+fvbfrj,Neki Neko,foodtruck,Japonais,Asiatique,,Mardi,,,10-15,,https://nekinekofood31.wixsite.com/site,https://maps.app.goo.gl/CBVJ7CwHx8bk3SFk8,actif,,,1,
+n4qjfs,Libanais,foodtruck,Libanais,Libanaise / Orientale,,Jeudi,,,10-15,,,https://maps.app.goo.gl/7SqDcNNdjZi1DxSb8,actif,,,1,
+zdgzr4,Crêperie Doc Krampouz,foodtruck,Crêpes,Crêpes,,Mardi;Jeudi,,,9-12,,,https://maps.app.goo.gl/5PywqdFLqH58vRgM7,actif,,,1,
+ze9vbu,L'épicurieux,foodtruck,Bagel,Sandwichs / Bagels,,Mercredi,,,12,,https://www.lepicurieux.net/,https://maps.app.goo.gl/V6bXfQe4PXJ1y4s76,actif,,,1,
+76z85s,L'épicurieux,foodtruck,Bagel,Sandwichs / Bagels,,Jeudi,,,12,,https://www.lepicurieux.net/,https://maps.app.goo.gl/tD6EdmYzDJneNAGh9,actif,,,1,
+utehrn,Ô Tuk Tuk,foodtruck,Asiatique,Asiatique,,Mercredi,,,10-15,,https://otuktuk.fr/,https://maps.app.goo.gl/UBn3AWEDEui95YuR9,actif,,,1,
+fxfyz9,Rosemund,foodtruck,Africain,Africaine,,Vendredi,,,10-15,,,https://maps.app.goo.gl/7SqDcNNdjZi1DxSb8,actif,,,1,
+sewggy,Bibim Pop,foodtruck,Coréen,Asiatique,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,7 à 12,,https://www.bibimpop.fr/,https://maps.app.goo.gl/zRiMijYwyYRWGxnU8,actif,,,1,
+pa74vh,Pizza Maestro,foodtruck,Pizza,Italienne / Pizza,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,8 à 20,,https://pizzamaestrobasso.wixsite.com/pizzamaestrofr,https://maps.app.goo.gl/osxHTAmxmBq3mAwy5,actif,,,1,
+dm6nm2,So Piad’In,foodtruck,Pizza roulée,Italienne / Pizza,,Jeudi,,,10,,https://wefoodtruck.fr/food-trucks/so-piadin-food-truck-toulouse-italien-evenement/,https://maps.app.goo.gl/v4bo9gLWiiaMzNpk8,actif,,,1,
+ffzwtz,Grill Truck,foodtruck,Grillades,Grillades,,Jeudi,,,10-15,,https://legrilltruck.com/la-carte/,https://maps.app.goo.gl/NK8QJSaoFYfszxq68,actif,,,1,
+zdm9p9,Spice Box,foodtruck,Indien,Indienne,,Lundi,,,,,https://www.spicebox.fr/general-3,https://maps.app.goo.gl/rDjvEgcabAxqhwJh6,actif,,,1,
+aphbyt,Moya,foodtruck,Mexicain,Mexicaine,,Mercredi,,,,,https://fr.restaurantguru.com/Moya-Mexican-Street-Food-Toulouse,https://maps.app.goo.gl/NK8QJSaoFYfszxq68,actif,,,1,
+96q258,Tartine & Lulu,foodtruck,Tartines / Cuisine maison,Sandwichs / Bagels,,Mardi,,,,,https://www.facebook.com/TartineLulu/?locale=fr_FR,https://maps.app.goo.gl/gJqj7wHE6Q1nUVfx6,actif,,,1,
+zf5gyj,Ban Thai,foodtruck,Thailandais,Asiatique,,Lundi,,,10 à 15,,,https://maps.app.goo.gl/mis2ZqEpMAhC9Aey5,actif,,,1,
+xdr9kx,CamiHong,foodtruck,Vietnamien,Asiatique,,Jeudi,,,9 à 12,,https://www.camihong.fr,https://maps.app.goo.gl/1mRwHsU2dXF3S8fN6,actif,,,1,
+mjs3xj,Les canailles,foodtruck,grillades,Grillades,,Lundi,,,10-15,,https://www.lescanaillestoulouse.com/,https://maps.app.goo.gl/bkB33LhjKXy5C5Wn6,actif,,,1,
+mv54de,Ladilafé,foodtruck,Créole,Créole,,Mardi,,,10-20,,https://www.ladilafe.net/,https://maps.app.goo.gl/tkqjVUT5quqNnAfv8,actif,,,1,
+kqx2dh,Pickles Salad Bar,foodtruck,Salad bar,Salades,,Lundi;Mardi;Mercredi;Jeudi;Vendredi,,,10-15,,,https://maps.app.goo.gl/wzFZKqFkimNRwoxB6,actif,,,1,

@@ -1,6 +1,7 @@
 'use strict';
 
-// Migration automatique des données au démarrage (3.0.0 -> 3.1.0).
+// Migration automatique des données au démarrage (3.0.0 -> 3.1.0 -> 3.2.0).
+// 3.2.0 : colonne lieux_jours ajoutée (vide) en fin de foodtrucks.csv.
 // - foodtrucks.csv : ajout des colonnes id, type, categorie, etiquettes, lieu, horaires, paiements, statut,
 //   cree_le, maj_le, version ; un identifiant stable est attribué à chaque ligne (aucune ligne fusionnée).
 // - foodtruckAValider.csv : réécrit au nouveau format (colonnes vides).

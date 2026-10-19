@@ -6,9 +6,9 @@
 // Les colonnes sont retrouvées par leur nom dans l'en-tête : un ancien fichier (colonnes manquantes)
 // est lu avec des valeurs vides, et les colonnes inconnues sont ignorées.
 
-// Catalogue des établissements (3.1.0)
+// Catalogue des établissements (3.2.0 : colonne lieux_jours ajoutée en fin, « Jeudi=parking-nord;Vendredi=https://… »)
 const COLONNES = ['id', 'nom', 'type', 'cuisine', 'categorie', 'etiquettes', 'jours', 'lieu', 'horaires', 'prix',
-    'paiements', 'site', 'emplacement', 'statut', 'cree_le', 'maj_le', 'version'];
+    'paiements', 'site', 'emplacement', 'statut', 'cree_le', 'maj_le', 'version', 'lieux_jours'];
 // Format de la 3.0.0 et des versions précédentes (aussi utilisé sans en-tête par l'ancien foodtruckAValider.csv)
 const ANCIENNES_COLONNES = ['nom', 'cuisine', 'jours', 'emplacement', 'prix', 'site'];
 const COLONNES_LIEUX = ['id', 'nom', 'description', 'minutes_a_pied', 'maps'];
@@ -90,9 +90,19 @@ function versObjets(texte, colonnes, sansEntete = colonnes) {
     });
 }
 
-/** Objets -> texte CSV avec en-tête. */
-function depuisObjets(objets, colonnes) {
-    return serialiserCSV([colonnes, ...objets.map(o => colonnes.map(col => (o[col] == null ? '' : o[col])))]);
+/**
+ * Neutralise une valeur exportée pour Excel : un texte commençant par = + - @ tabulation ou retour chariot
+ * serait interprété comme une formule ; il est préfixé d'une apostrophe.
+ */
+function neutraliser(valeur) {
+    const v = valeur == null ? '' : String(valeur);
+    return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+}
+
+/** Objets -> texte CSV avec en-tête. `options.export` : valeurs neutralisées (fichier destiné à Excel). */
+function depuisObjets(objets, colonnes, options = {}) {
+    const valeur = v => (options.export ? neutraliser(v) : (v == null ? '' : v));
+    return serialiserCSV([colonnes, ...objets.map(o => colonnes.map(col => valeur(o[col])))]);
 }
 
 /** A-t-on lu un fichier au format complet ? (sinon : migration nécessaire) */
@@ -104,12 +114,12 @@ function enteteComplete(texte, colonnes) {
 }
 
 const versFoodtrucks = texte => versObjets(texte, COLONNES, ANCIENNES_COLONNES);
-const depuisFoodtrucks = foodtrucks => depuisObjets(foodtrucks, COLONNES);
+const depuisFoodtrucks = (foodtrucks, options) => depuisObjets(foodtrucks, COLONNES, options);
 const versLieux = texte => versObjets(texte, COLONNES_LIEUX);
-const depuisLieux = lieux => depuisObjets(lieux, COLONNES_LIEUX);
+const depuisLieux = (lieux, options) => depuisObjets(lieux, COLONNES_LIEUX, options);
 
 module.exports = {
     COLONNES, ANCIENNES_COLONNES, COLONNES_LIEUX,
-    parserCSV, serialiserCSV, versObjets, depuisObjets, enteteComplete,
+    parserCSV, serialiserCSV, versObjets, depuisObjets, enteteComplete, neutraliser,
     versFoodtrucks, depuisFoodtrucks, versLieux, depuisLieux,
 };

@@ -232,7 +232,10 @@ function construireStatistiques(agregats, debut, fin) {
         r.technique.erreurs += j.technique.erreurs;
         dureeTotale += j.technique.dureeTotaleMs;
     }
-    r.totaux.suggestions = r.evenements.suggestion || 0;
+    // Ajouts d'établissements : suggestions (avant la 3.2.0) et publications directes (3.2.0)
+    r.totaux.suggestions = (r.evenements.suggestion || 0) + (r.evenements.ajout || 0);
+    r.totaux.contributions = ['ajout', 'modification', 'restauration', 'avis', 'avis_modifie', 'presence', 'signalement']
+        .reduce((s, type) => s + (r.evenements[type] || 0), 0);
     r.totaux.actifsMoyenJour = r.totaux.joursActifs ? Math.round(sommeActifs / r.totaux.joursActifs * 10) / 10 : 0;
     r.technique.dureeMoyenneMs = r.technique.requetes ? Math.round(dureeTotale / r.technique.requetes) : 0;
     const liste = (objet, nom) => Object.keys(objet).sort().map(cle => ({ [nom]: cle, ...objet[cle] })).filter(recouvre);

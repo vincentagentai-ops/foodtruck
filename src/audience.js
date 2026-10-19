@@ -25,12 +25,23 @@ const TYPES_PUBLICS = [
     'clic_maps', // lien Google Maps (cible : id)
     'favori_ajout', 'favori_retrait', // cible : id
     'nouveau_clic', // clic dans l'encadré « Nouveaux cette semaine » (cible : id)
-    'suggestion_ouverte', 'suggestion_erreur',
+    'suggestion_ouverte', 'suggestion_erreur', // anciennes pages (avant la 3.2.0)
     'clic_mail',
+    'fiche_ouverte', // ouverture de la fiche d'un établissement (cible : id)
+    'historique_ouvert', // onglet Historique de la fiche (cible : id)
+    'ajout_ouvert', // formulaire « Ajouter un établissement » ouvert
+    'ajout_erreur', // ajout refusé (erreur de saisie)
+    'modification_ouverte', // formulaire « Modifier les infos » ouvert (cible : id)
+    'doublon_vu', // avertissement de doublon affiché (cible : id de la fiche ressemblante)
+    'quoi_de_neuf_clic', // clic dans le fil « Quoi de neuf » (cible : id)
 ];
 // Évènements écrits uniquement par le serveur (refusés s'ils viennent d'une page)
+// (les contributions sont journalisées sans identifiant de navigateur : elles ne sont pas reliables à l'audience)
 const TYPES_SERVEUR = ['page_vue', 'suggestion', 'admin_ajout', 'admin_modification', 'admin_suppression',
-    'admin_validation', 'admin_rejet', 'admin_lieu', 'ancien', 'jour_ancien', 'consultation_ancien'];
+    'admin_validation', 'admin_rejet', 'admin_lieu', 'ancien', 'jour_ancien', 'consultation_ancien',
+    'ajout', 'modification', 'restauration', 'retrait', 'avis', 'avis_modifie', 'avis_supprime', 'presence',
+    'signalement', 'avis_masque_auto', 'statut_auto', 'admin_fusion', 'admin_moderation', 'admin_restauration',
+    'admin_blocage', 'admin_seuils', 'admin_purge'];
 
 const CHEMINS_PUBLICS = ['/index.html', '/confidentialite.html'];
 

@@ -13,7 +13,7 @@ config.avertissements.forEach(a => console.warn(`ATTENTION : ${a}`));
 app.locals.stockage.initialiser().then(() => {
     const { migration } = app.locals.stockage;
     if (migration.migre) {
-        console.log(`Données migrées au format 3.1.0. Copie des fichiers d'origine : ${migration.copies.join(', ')}`);
+        console.log(`Données migrées au format 3.2.0. Copie des fichiers d'origine : ${migration.copies.join(', ')}`);
     }
     app.listen(config.port, () => {
         console.log(`Food Trucks démarré sur http://localhost:${config.port} (données : ${config.dossierDonnees})`);
@@ -21,10 +21,10 @@ app.locals.stockage.initialiser().then(() => {
             console.warn('ADMIN_PASSWORD non défini : espace administrateur désactivé.');
         }
         if (!config.mail.hote) {
-            console.warn("SMTP_HOST non défini : aucun mail ne sera envoyé lors d'une suggestion.");
+            console.warn("SMTP_HOST non défini : aucun mail ne sera envoyé lors d'un ajout d'établissement.");
         }
-        // Sauvegarde quotidienne, agrégats statistiques et purge des journaux de plus de 13 mois
-        demarrerMaintenance({ config, statistiques: app.locals.statistiques });
+        // Sauvegarde quotidienne, agrégats statistiques, purge à 13 mois, seuils d'archivage automatique
+        demarrerMaintenance({ config, statistiques: app.locals.statistiques, contributions: app.locals.contributions });
     });
 }).catch(err => {
     console.error('Démarrage impossible :', err);

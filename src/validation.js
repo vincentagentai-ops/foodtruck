@@ -29,7 +29,7 @@ const MOTIFS_CATEGORIES = [
 ];
 
 const LONGUEUR_MAX = {
-    nom: 80, cuisine: 80, jours: 60, emplacement: 1000, prix: 30, site: 1000, horaires: 60, lieu: 40,
+    nom: 80, cuisine: 80, jours: 60, emplacement: 1000, prix: 30, site: 1000, horaires: 60, lieu: 40, lieux_jours: 3000,
 };
 
 function retirerAccents(s) {
@@ -97,6 +97,37 @@ function estUrl(s) {
     }
 }
 
+/**
+ * Lieux différents selon le jour (colonne lieux_jours) : « Jeudi=parking-nord;Vendredi=https://maps… »
+ * -> { Jeudi: 'parking-nord', Vendredi: 'https://maps…' }. Accepte aussi un objet { Jeudi: '…' }.
+ * La valeur est l'identifiant d'un lieu ou un lien Google Maps.
+ */
+function lireLieuxJours(saisie) {
+    const resultat = {};
+    if (saisie && typeof saisie === 'object' && !Array.isArray(saisie)) {
+        for (const [jour, valeur] of Object.entries(saisie)) resultat[jour] = String(valeur == null ? '' : valeur).trim();
+        return resultat;
+    }
+    const morceaux = String(saisie || '').split(/;(?=\s*(?:lundi|mardi|mercredi|jeudi|vendredi)\s*=)/i);
+    for (const m of morceaux) {
+        const i = m.indexOf('=');
+        if (i < 0) continue;
+        resultat[m.slice(0, i).trim()] = m.slice(i + 1).trim();
+    }
+    return resultat;
+}
+
+/** { Jeudi: 'parking-nord' } -> « Jeudi=parking-nord » (ordre de la semaine, valeurs vides retirées). */
+function ecrireLieuxJours(objet) {
+    return JOURS.filter(j => objet[j]).map(j => `${j}=${objet[j]}`).join(';');
+}
+
+/** Lieu (identifiant ou lien Maps) d'un établissement pour un jour donné. */
+function lieuDuJour(ft, jour) {
+    const special = lireLieuxJours(ft.lieux_jours)[jour];
+    return special || ft.lieu || '';
+}
+
 function texteDe(d, nom) {
     return String(d[nom] == null ? '' : d[nom]).replace(/[\r\n\t]+/g, ' ').trim();
 }
@@ -125,9 +156,27 @@ function validerFoodtruck(donnees, options = {}) {
         site: texte('site'),
         emplacement: texte('emplacement'),
         statut: texte('statut').toLowerCase() || 'actif',
+        lieux_jours: '',
     };
     const { jours, invalides } = normaliserJours(d.jours);
     ft.jours = jours.join(';');
+
+    // Lieu différent certains jours (établissement multi-lieux)
+    const parJour = {};
+    for (const [saisieJour, valeur] of Object.entries(lireLieuxJours(d.lieux_jours))) {
+        if (!valeur) continue;
+        const jour = JOURS.find(j => cle(j) === cle(saisieJour));
+        if (!jour) { erreurs.push(`Lieu par jour : jour non reconnu (${saisieJour}).`); continue; }
+        if (!jours.includes(jour)) continue; // jour retiré : son lieu particulier est oublié
+        if (valeur === ft.lieu) continue; // identique au lieu habituel
+        if (estUrl(valeur)) {
+            if (valeur.includes(';')) erreurs.push(`Lieu du ${jour.toLowerCase()} : lien invalide.`);
+        } else if (options.lieux && !options.lieux.includes(valeur)) {
+            erreurs.push(`Lieu du ${jour.toLowerCase()} inconnu : ${valeur}.`);
+        }
+        parJour[jour] = valeur;
+    }
+    ft.lieux_jours = ecrireLieuxJours(parJour);
 
     const categorie = texte('categorie');
     if (categorie) {
@@ -197,5 +246,5 @@ function slug(texte) {
 module.exports = {
     JOURS, TYPES, STATUTS, CATEGORIES, ETIQUETTES, PAIEMENTS,
     normaliserJours, normaliserListe, normaliserPrix, estUrl, categorieDepuisCuisine,
-    validerFoodtruck, validerLieu, slug,
+    validerFoodtruck, validerLieu, slug, lireLieuxJours, ecrireLieuxJours, lieuDuJour, retirerAccents, cle,
 };

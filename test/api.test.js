@@ -150,53 +150,62 @@ test('Évènements : liste blanche, types réservés au serveur refusés, taille
     assert.deepEqual(Object.keys(ev).sort(), ['cible', 'page', 'ts', 'type', 'v', 'version']);
 });
 
-test('Suggestion invalide refusée avec le détail des erreurs', async () => {
-    const r = await t.appel('POST', '/api/suggestions', { nom: 'X', jours: 'samedi' });
+test('Ajout invalide refusé avec le détail des erreurs ; anciennes adresses de suggestion redirigées', async () => {
+    const nav = await t.navigateur();
+    const r = await nav('POST', '/api/etablissements', { nom: 'X', jours: 'samedi' });
     assert.equal(r.statut, 400);
     assert.ok(r.json.details.length >= 2);
-    const vide = await t.appel('POST', '/api/suggest-foodtruck', {});
-    assert.equal(vide.statut, 400);
+    for (const url of ['/api/suggestions', '/api/suggest-foodtruck']) {
+        const ancienne = await nav('POST', url, {});
+        assert.equal(ancienne.statut, 308, url);
+        assert.equal(ancienne.entetes.get('location'), '/api/etablissements');
+    }
+    // Sans cookie (navigateur qui les refuse) : pas de contribution possible
+    assert.equal((await t.appel('POST', '/api/etablissements', { nom: 'A', cuisine: 'B', jours: 'Lundi', emplacement: 'https://maps.app.goo.gl/x' })).statut, 400);
 });
 
-test('Suggestion -> publication (avec correction) -> identifiant attribué, comptée par le serveur', async () => {
+test('Ajout publié immédiatement (compté par le serveur, mail à l\'admin) ; suggestion héritée publiée par l\'admin', async () => {
+    const nav = await t.navigateur();
     const emplacement = 'https://www.google.fr/maps/place/12+Rue,+31100+Toulouse/@43.5,1.38,19z';
-    const s = await t.appel('POST', '/api/suggestions', {
+    const s = await nav('POST', '/api/etablissements', {
         nom: 'Moya', cuisine: 'Mexicain', jours: 'mercredi;vendredi', emplacement, prix: '10 à 15 €', site: '',
-        paiements: 'CB', statut: 'archive', // un visiteur ne choisit pas le statut
+        paiements: 'CB', statut: 'archive', pseudo: 'Camille', // un visiteur ne choisit pas le statut
     });
-    assert.equal(s.statut, 201);
+    assert.equal(s.statut, 201, s.texte);
+    assert.equal(s.json.etablissement.statut, 'actif');
+    assert.equal(s.json.etablissement.version, '1');
+    assert.match(s.json.etablissement.id, /^[a-z0-9]{6}$/);
     assert.equal(mails.length, 1);
     assert.equal(mails[0].to, 'contact@example.test');
+    assert.match(mails[0].subject, /Moya/);
     await patienter();
-    assert.equal(lireUsage().filter(e => e.type === 'suggestion').length, 1);
+    const ajouts = lireUsage().filter(e => e.type === 'ajout');
+    assert.equal(ajouts.length, 1);
+    assert.equal(ajouts[0].v, null); // contribution non reliable à l'audience
 
+    const publie = (await t.appel('GET', '/api/foodtrucks')).json.find(f => f.nom === 'Moya');
+    assert.equal(publie.emplacement, emplacement); // virgules de l'URL préservées
+    assert.equal(publie.jours, 'Mercredi;Vendredi');
+
+    // Suggestion héritée de la 3.1.0 (ancienne file) : publiée par l'admin avec correction
     const attente = (await t.appel('GET', '/api/admin/suggestions', undefined, AUTH)).json;
-    assert.equal(attente.length, 2);
-    const i = attente.findIndex(ft => ft.nom === 'Moya');
-    assert.equal(attente[i].emplacement, emplacement); // virgules de l'URL préservées
-    assert.equal(attente[i].statut, 'actif');
-
-    const v = await t.appel('POST', `/api/admin/suggestions/${i}/valider`,
-        { original: attente[i], foodtruck: { ...attente[i], nom: 'Moya Street Food', type: 'restaurant' } }, AUTH);
+    assert.equal(attente.length, 1);
+    const v = await t.appel('POST', '/api/admin/suggestions/0/valider',
+        { original: attente[0], foodtruck: { ...attente[0], nom: 'Saveur de Corée', type: 'restaurant' } }, AUTH);
     assert.equal(v.statut, 200, v.texte);
     assert.match(v.json.foodtruck.id, /^[a-z0-9]{6}$/);
-    assert.equal(v.json.foodtruck.version, '1');
     assert.match(v.json.foodtruck.cree_le, /^\d{4}-\d{2}-\d{2}$/);
-
     const publies = (await t.appel('GET', '/api/foodtrucks')).json;
-    assert.deepEqual(publies.map(f => f.nom), ['Neki Neko', 'Moya Street Food']);
-    assert.equal(publies[1].emplacement, emplacement);
-    assert.equal(publies[1].jours, 'Mercredi;Vendredi');
-    assert.equal(publies[1].type, 'restaurant');
-    assert.equal(publies[1].paiements, 'CB');
-
+    assert.deepEqual(publies.map(f => f.nom), ['Neki Neko', 'Moya', 'Saveur de Corée']);
+    assert.equal(publies[2].type, 'restaurant');
     const texte = fs.readFileSync(t.config.fichierFoodtrucks, 'utf8');
-    assert.equal(texte.split('\n').filter(Boolean).length, 3); // en-tête + 2 lignes, aucune ligne fusionnée
+    assert.equal(texte.split('\n').filter(Boolean).length, 4); // en-tête + 3 lignes
     assert.ok(texte.endsWith('\n') && !texte.endsWith('\n\n'));
-    assert.equal((await t.appel('GET', '/api/admin/suggestions', undefined, AUTH)).json.length, 1);
+    assert.equal((await t.appel('GET', '/api/admin/suggestions', undefined, AUTH)).json.length, 0);
 });
 
-test('Rejet d\'une suggestion et conflit si la ligne a changé', async () => {
+test('Suggestion héritée écartée, et conflit si la ligne a changé', async () => {
+    fs.writeFileSync(t.config.fichierAValider, 'id,nom,type,cuisine,categorie,etiquettes,jours,lieu,horaires,prix,paiements,site,emplacement,statut,cree_le,maj_le,version\n,Vieille suggestion,foodtruck,Pizza,,,Lundi,,,,,,https://maps.app.goo.gl/z,actif,,,\n');
     const attente = (await t.appel('GET', '/api/admin/suggestions', undefined, AUTH)).json;
     const conflit = await t.appel('DELETE', '/api/admin/suggestions/0', { original: { ...attente[0], nom: 'Autre' } }, AUTH);
     assert.equal(conflit.statut, 409);
@@ -262,7 +271,7 @@ test('Statistiques : navigateurs actifs, pages vues, exclusions, suggestions com
     assert.equal(r.json.totaux.pagesVues, vues.length);
     assert.ok(vues.every(e => e.page === '/index.html'));
     assert.ok(r.json.totaux.actifsMoyenJour >= 1);
-    assert.equal(r.json.totaux.suggestions, 1);
+    assert.equal(r.json.totaux.suggestions, 1); // un ajout publié
     assert.ok(!('/admin/index.html' in r.json.pages));
     assert.equal(r.json.evenements.clic_maps, 1);
     // Aucun identifiant de navigateur dans la réponse
@@ -276,19 +285,22 @@ test('Chart.js est servi localement', async () => {
 });
 
 test('Corps JSON invalide -> 400 (et non 500)', async () => {
-    const r = await t.appel('POST', '/api/suggestions', '{pas du json');
+    const r = await t.appel('POST', '/api/evenements', '{pas du json');
     assert.equal(r.statut, 400);
 });
 
-test('Limites de fréquence sur les suggestions et les évènements (429)', async () => {
-    const l = await demarrer({ env: { LIMITE_SUGGESTIONS: '2', LIMITE_EVENEMENTS: '3', LIMITE_FACTEUR_IP: '1' } });
+test('Limites de fréquence sur les contributions et les évènements (429)', async () => {
+    const l = await demarrer({ env: { LIMITE_CONTRIBUTIONS: '2', LIMITE_EVENEMENTS: '3', LIMITE_FACTEUR_IP: '1' } });
     try {
-        const suggestion = { nom: 'A', cuisine: 'B', jours: 'Lundi', emplacement: 'https://maps.app.goo.gl/x' };
-        assert.equal((await l.appel('POST', '/api/suggestions', suggestion)).statut, 201);
-        assert.equal((await l.appel('POST', '/api/suggestions', suggestion)).statut, 201);
-        const refus = await l.appel('POST', '/api/suggestions', suggestion);
+        const nav = await l.navigateur();
+        const ajout = { nom: 'A', cuisine: 'B', jours: 'Lundi', emplacement: 'https://maps.app.goo.gl/x' };
+        assert.equal((await nav('POST', '/api/etablissements', ajout)).statut, 201);
+        assert.equal((await nav('POST', '/api/etablissements', { ...ajout, nom: 'C' })).statut, 201);
+        const refus = await nav('POST', '/api/etablissements', { ...ajout, nom: 'D' });
         assert.equal(refus.statut, 429);
         assert.ok(Number(refus.entetes.get('retry-after')) > 0);
+        const id = (await l.appel('GET', '/api/foodtrucks')).json[0].id;
+        assert.equal((await nav('POST', `/api/etablissements/${id}/avis`, { note: 4 })).statut, 429); // même compteur
         for (let i = 0; i < 3; i++) assert.equal((await l.appel('POST', '/api/evenements', { type: 'hasard' })).statut, 204);
         assert.equal((await l.appel('POST', '/api/evenements', { type: 'hasard' })).statut, 429);
         assert.equal((await l.appel('POST', '/api/log', { event: 'Jour sélectionné : Lundi' })).statut, 429);
