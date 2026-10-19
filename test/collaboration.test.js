@@ -136,6 +136,15 @@ test("C3 : historique de la fiche et « Restaurer cette version »", async () =>
     assert.equal((await a('POST', `/api/etablissements/${ft.id}/restaurer/1`, { versionActuelle: '2' })).statut, 409);
     assert.equal((await a('POST', `/api/etablissements/${ft.id}/restaurer/42`, { versionActuelle: '3' })).statut, 404);
     assert.equal((await t.appel('GET', `/api/etablissements/${ft.id}/historique`)).json.entrees[0].action, 'restaurer');
+
+    // Fiche antérieure à l'historique (données migrées) : la version d'avant la 1re modification est restaurable
+    const stockage = t.app.locals.stockage;
+    const ancienne = { ...ft, id: 'ancien', nom: 'Ancien Truck', version: '1' };
+    await stockage.ecrireFichier(t.config.fichierFoodtrucks, [...await stockage.lireFoodtrucks(), ancienne]);
+    await a('PUT', '/api/etablissements/ancien', { version: '1', etablissement: { ...ancienne, prix: '50' } });
+    const h2 = (await t.appel('GET', '/api/etablissements/ancien/historique')).json;
+    assert.equal(h2.entrees[0].versionAvant, '1');
+    assert.equal((await a('POST', '/api/etablissements/ancien/restaurer/1', { versionActuelle: '2' })).json.etablissement.prix, '10');
 });
 
 test('C6/C7 : un avis par navigateur, modifiable et supprimable par son seul auteur ; moyenne', async () => {

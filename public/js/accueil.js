@@ -1,5 +1,6 @@
 // Page d'accueil : établissements du jour, recherche et filtres, regroupement par lieu, favoris,
-// nouveautés, « Au hasard », suggestion.
+// nouveautés, « Au hasard », note des collègues et présence du jour, fil « Quoi de neuf ».
+// La fiche détaillée est dans fiche.js, le formulaire d'ajout / de modification dans formulaires.js.
 
 (() => {
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
@@ -26,6 +27,18 @@
     }
 
     const estAujourdhui = jour => !jourParDefaut().weekEnd && jourParDefaut().jour === jour;
+
+    /** Date (AAAA-MM-JJ) du jour affiché : cette semaine, ou la semaine prochaine le week-end. */
+    function dateDuJour(jour) {
+        const d = new Date();
+        const index = d.getDay(); // 0 = dimanche
+        const lundi = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((index + 6) % 7) + (index === 0 || index === 6 ? 7 : 0));
+        lundi.setDate(lundi.getDate() + JOURS.indexOf(jour));
+        return Commun.dateISO(lundi);
+    }
+
+    /** Lieu (identifiant ou lien Maps) d'un établissement pour un jour donné (lieu différent selon le jour). */
+    const lieuDuJour = (ft, jour) => Formulaires.lireLieuxJours(ft.lieux_jours)[jour] || ft.lieu || '';
     const joursDe = ft => ft.jours.split(';').map(j => j.trim()).filter(Boolean);
     const listeDe = valeur => String(valeur || '').split(';').map(v => v.trim()).filter(Boolean);
 
@@ -83,7 +96,7 @@
         if (filtres.etiquette && !listeDe(ft.etiquettes).includes(filtres.etiquette)) return false;
         if (filtres.paiement && !listeDe(ft.paiements).includes(filtres.paiement)) return false;
         if (recherche) {
-            const lieu = lieux[ft.lieu];
+            const lieu = lieux[lieuDuJour(ft, jourCourant)];
             const texte = Commun.simplifier([ft.nom, ft.cuisine, ft.categorie, ft.etiquettes, ft.paiements,
                 ft.type, lieu ? lieu.nom : ''].join(' '));
             if (!Commun.simplifier(recherche).split(/\s+/).filter(Boolean).every(mot => texte.includes(mot))) return false;
@@ -125,16 +138,36 @@
         return lieu.minutes_a_pied ? `${lieu.nom} · ${lieu.minutes_a_pied} min à pied` : lieu.nom;
     }
 
+    /** Note et présence du jour (résumé calculé par le serveur). */
+    function resumeCollegues(ft) {
+        const r = ft.resume;
+        if (!r) return '';
+        const h = Commun.html;
+        const note = r.nbAvis >= 3
+            ? `<span class="note" title="Moyenne des avis des collègues">★ ${h(Commun.nombre(r.note))} <small>(${r.nbAvis} avis)</small></span>`
+            : `<span class="note vide">${r.nbAvis ? `Pas encore assez d'avis (${r.nbAvis})` : 'Pas encore d\'avis'}</span>`;
+        let presence = '';
+        if (estAujourdhui(jourCourant)) {
+            const p = r.presence;
+            if (p.presents) presence = `<span class="presence ok">✔ Confirmé par ${p.presents} collègue${p.presents > 1 ? 's' : ''} (dernière à ${h(p.derniere)})</span>`;
+            if (p.absents) presence += `<span class="presence ko">⚠ Signalé absent par ${p.absents}</span>`;
+            if (!presence) presence = '<span class="presence vide">Pas encore confirmé aujourd\'hui</span>';
+        }
+        return `<p class="resume-collegues">${note}${presence}</p>`;
+    }
+
     function fiche(ft, avecLieu) {
         const h = Commun.html;
         const site = Commun.urlSure(ft.site);
-        const lieu = lieux[ft.lieu];
-        const maps = Commun.urlSure(ft.emplacement) || (lieu && Commun.urlSure(lieu.maps));
+        const valeurLieu = lieuDuJour(ft, jourCourant);
+        const lieu = lieux[valeurLieu];
+        const maps = Commun.urlSure(valeurLieu) || Commun.urlSure(ft.emplacement) || (lieu && Commun.urlSure(lieu.maps));
+        const ferme = ft.resume && ft.resume.fermetures.includes(dateDuJour(jourCourant));
         const favori = favoris.has(ft.id);
         const badges = [
             anciennete(ft.cree_le) < JOURS_NOUVEAU ? '<span class="badge nouveau">Nouveau</span>' : '',
             ft.type === 'restaurant' ? '<span class="badge">Restaurant</span>' : '',
-            ft.statut === 'incertain' ? '<span class="badge attention">Présence à confirmer</span>' : '',
+            ft.statut === 'incertain' || (ft.resume && ft.resume.plusPresent) ? '<span class="badge attention">Présence à confirmer</span>' : '',
         ].join('');
         const infos = [Commun.formaterPrix(ft.prix), ft.horaires].filter(Boolean).map(t => `<span>${h(t)}</span>`).join('');
         const etiquettes = listeDe(ft.etiquettes).map(e => `<li>${h(e)}</li>`).join('');
@@ -143,9 +176,10 @@
             site ? `<a href="${h(site)}" target="_blank" rel="noopener" data-clic="clic_site" data-id="${h(ft.id)}">Site / menu</a>` : '',
             maps ? `<a href="${h(maps)}" target="_blank" rel="noopener" class="secondaire" data-clic="clic_maps" data-id="${h(ft.id)}">Plan Google Maps</a>` : '',
         ].filter(Boolean).join('');
-        return `<article class="fiche${favori ? ' favori' : ''}${ft.statut === 'incertain' ? ' incertain' : ''}" id="ft-${h(ft.id)}" tabindex="-1">
+        return `<article class="fiche${favori ? ' favori' : ''}${ft.statut === 'incertain' ? ' incertain' : ''}${ferme ? ' fermee' : ''}" id="ft-${h(ft.id)}" tabindex="-1">
+            ${ferme ? `<p class="bandeau-ferme">Fermé exceptionnellement ce ${h(Commun.dateCourte(dateDuJour(jourCourant)))}</p>` : ''}
             <div class="fiche-tete">
-                <h3>${h(ft.nom)} ${badges}</h3>
+                <h3><button type="button" class="lien nom-fiche" data-fiche="${h(ft.id)}">${h(ft.nom)}</button> ${badges}</h3>
                 <button type="button" class="etoile" data-favori="${h(ft.id)}" aria-pressed="${favori}"
                     aria-label="${favori ? 'Retirer' : 'Ajouter'} ${h(ft.nom)} ${favori ? 'des' : 'aux'} favoris"
                     title="${favori ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${favori ? '★' : '☆'}</button>
@@ -155,7 +189,8 @@
             ${infos ? `<p class="infos">${infos}</p>` : ''}
             ${etiquettes ? `<ul class="etiquettes">${etiquettes}</ul>` : ''}
             ${paiements.length ? `<p class="paiements">Paiement : ${h(paiements.join(', '))}</p>` : ''}
-            ${liens ? `<p class="liens">${liens}</p>` : ''}
+            ${resumeCollegues(ft)}
+            <p class="liens"><button type="button" class="lien" data-fiche="${h(ft.id)}">Fiche, avis, présence</button>${liens}</p>
         </article>`;
     }
 
@@ -168,7 +203,8 @@
         // Regroupement par lieu : lieux connus du plus proche au plus loin, « Lieu à préciser » en dernier
         const groupes = new Map();
         for (const ft of liste) {
-            const cle = lieux[ft.lieu] ? ft.lieu : '';
+            const valeur = lieuDuJour(ft, jourCourant);
+            const cle = lieux[valeur] ? valeur : '';
             if (!groupes.has(cle)) groupes.set(cle, []);
             groupes.get(cle).push(ft);
         }
@@ -266,11 +302,13 @@
         if (bouton) bouton.focus();
     }
 
-    async function charger() {
+    async function charger(rechargement = false) {
         try {
-            const [liste, listeLieux] = await Promise.all([Commun.api('/api/foodtrucks'), Commun.api('/api/lieux')]);
-            etablissements = liste;
+            const [reponse, listeLieux] = await Promise.all([Commun.api('/api/etablissements'), Commun.api('/api/lieux')]);
+            etablissements = reponse.etablissements;
             lieux = Object.fromEntries(listeLieux.map(l => [l.id, l]));
+            // Fiches fusionnées : les favoris suivent la fiche conservée
+            favoris = new Set([...favoris].map(id => reponse.alias[id] || id));
         } catch (err) {
             document.getElementById('titreResultat').textContent = 'Impossible de charger la liste. Réessayez plus tard.';
             return;
@@ -278,9 +316,33 @@
         // Favoris d'établissements disparus : oubliés
         const ids = new Set(etablissements.map(ft => ft.id));
         favoris = new Set([...favoris].filter(id => ids.has(id)));
-        remplirLieuxSuggestion();
+        Commun.ecrireLocal(CLE_FAVORIS, [...favoris]);
+        Formulaires.definirLieux(Object.values(lieux));
+        Fiche.definirLieux(lieux);
         afficherNouveautes();
-        choisirJour(jourCourant || jourParDefaut().jour, false);
+        if (rechargement) afficher(); else choisirJour(jourCourant || jourParDefaut().jour, false);
+        chargerQuoiDeNeuf();
+    }
+
+    // --- Fil « Quoi de neuf »
+    async function chargerQuoiDeNeuf() {
+        const zone = document.getElementById('listeQuoiDeNeuf');
+        let elements;
+        try { elements = await Commun.api('/api/quoi-de-neuf'); } catch { zone.innerHTML = '<li class="vide">Indisponible pour le moment.</li>'; return; }
+        const h = Commun.html;
+        const texte = e => {
+            const qui = e.pseudo ? Commun.signature(e.pseudo) : 'un collègue';
+            if (e.type === 'ajout') return `ajouté par ${qui}`;
+            if (e.type === 'modification') return `infos modifiées par ${qui}${e.detail ? ` (${e.detail.toLowerCase()})` : ''}`;
+            if (e.type === 'restauration') return `version précédente restaurée par ${qui}`;
+            if (e.type === 'avis') return `${e.pseudo ? `avis de ${qui}` : "avis d'un collègue"} : ${Commun.etoiles(e.note)}`;
+            if (e.type === 'fermeture') return `fermé exceptionnellement le ${Commun.dateCourte(e.date)}`;
+            return '';
+        };
+        zone.innerHTML = elements.length ? elements.slice(0, 12).map(e => `<li>
+            <button type="button" class="lien" data-fiche="${h(e.cible)}" data-quoi="1">${h(e.nom)}</button>
+            ${h(texte(e))} <span class="quand">· ${h(Commun.tempsRelatif(e.ts))}</span></li>`).join('')
+            : '<li class="vide">Rien de nouveau pour l\'instant : ajoutez un établissement ou donnez votre avis !</li>';
     }
 
     function brancherFiltres() {
@@ -320,6 +382,14 @@
         liste.addEventListener('click', e => {
             const etoile = e.target.closest('[data-favori]');
             if (etoile) basculerFavori(etoile.dataset.favori);
+            const ouvrir = e.target.closest('[data-fiche]');
+            if (ouvrir) Fiche.ouvrir(ouvrir.dataset.fiche);
+        });
+        document.getElementById('listeQuoiDeNeuf').addEventListener('click', e => {
+            const ouvrir = e.target.closest('[data-fiche]');
+            if (!ouvrir) return;
+            Commun.evenement('quoi_de_neuf_clic', ouvrir.dataset.fiche);
+            Fiche.ouvrir(ouvrir.dataset.fiche);
         });
         // Clic gauche et clic molette (auxclick) sur les liens site / Maps
         const surLien = e => {
@@ -347,108 +417,31 @@
         });
     }
 
-    // --- Suggestion
-    const modale = document.getElementById('modaleSuggestion');
-    const formulaire = document.getElementById('formSuggestion');
-
-    function cases(zoneId, nom, valeurs) {
-        document.getElementById(zoneId).innerHTML = valeurs
-            .map(v => `<label class="case"><input type="checkbox" name="${nom}" value="${Commun.html(v)}"> ${Commun.html(v)}</label>`).join('');
-    }
-
-    function remplirLieuxSuggestion() {
-        const select = document.getElementById('lieu');
-        const liste = Object.values(lieux).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
-        for (const l of liste) select.add(new Option(l.nom, l.id));
-        document.getElementById('champLieu').hidden = liste.length === 0;
-    }
-
-    function afficherErreurs(erreurs) {
-        const liste = document.getElementById('erreursSuggestion');
-        liste.innerHTML = erreurs.map(e => `<li>${Commun.html(e)}</li>`).join('');
-        liste.hidden = erreurs.length === 0;
-    }
-
-    function ouvrirSuggestion() {
-        Commun.evenement('suggestion_ouverte');
-        afficherErreurs([]);
-        if (typeof modale.showModal === 'function') modale.showModal(); else modale.setAttribute('open', '');
-        document.getElementById('nom').focus();
-    }
-
-    function fermerSuggestion() {
-        if (typeof modale.close === 'function') modale.close(); else modale.removeAttribute('open');
-    }
-
-    async function envoyerSuggestion(event) {
-        event.preventDefault();
-        const donnees = new FormData(formulaire);
-        const suggestion = {
-            nom: donnees.get('nom'),
-            type: donnees.get('type'),
-            categorie: donnees.get('categorie'),
-            cuisine: donnees.get('cuisine'),
-            jours: donnees.getAll('jours').join(';'),
-            lieu: donnees.get('lieu') || '',
-            emplacement: donnees.get('emplacement').trim(),
-            prix: donnees.get('prix'),
-            horaires: donnees.get('horaires'),
-            paiements: donnees.getAll('paiements').join(';'),
-            site: donnees.get('site').trim(),
-        };
-        const erreurs = [];
-        if (!suggestion.nom.trim()) erreurs.push('Le nom est obligatoire.');
-        if (!suggestion.cuisine.trim()) erreurs.push('Le type de cuisine est obligatoire.');
-        if (!suggestion.jours) erreurs.push('Cochez au moins un jour.');
-        if (!suggestion.lieu && !Commun.urlSure(suggestion.emplacement)) erreurs.push("Choisissez un lieu ou collez le lien Google Maps (https://…).");
-        if (suggestion.emplacement && !Commun.urlSure(suggestion.emplacement)) erreurs.push("L'emplacement doit être un lien (https://…).");
-        if (suggestion.site && !Commun.urlSure(suggestion.site)) erreurs.push('Le site doit être une adresse web (https://…).');
-        if (erreurs.length) {
-            Commun.evenement('suggestion_erreur');
-            afficherErreurs(erreurs);
-            return;
-        }
-        const bouton = formulaire.querySelector('[type=submit]');
-        bouton.disabled = true;
-        try {
-            const reponse = await Commun.api('/api/suggestions', { method: 'POST', body: suggestion });
-            formulaire.reset();
-            fermerSuggestion();
-            Commun.notifier(reponse.message);
-        } catch (err) {
-            Commun.evenement('suggestion_erreur');
-            afficherErreurs(err.details && err.details.length ? err.details : [err.message]);
-        } finally {
-            bouton.disabled = false;
-        }
-    }
-
     async function configurer() {
         const config = await Commun.config();
         if (config.titre) document.title = config.titre;
         remplirSelect('filtreCategorie', config.categories || []);
         remplirSelect('filtreEtiquette', config.etiquettes || []);
         remplirSelect('filtrePaiement', config.paiements || []);
-        remplirSelect('categorie', config.categories || []);
-        cases('casesPaiements', 'paiements', config.paiements || []);
         synchroniserChamps();
         if (!config.contactEmail) return;
-        const sujet = encodeURIComponent('[FoodTrucks] Suggestion');
-        const corps = encodeURIComponent("Bonjour,\n\nVoici ma remarque ou l'établissement que je veux ajouter :\n\nNom : \nType de cuisine : \nJours : \nLieu : \nEmplacement Google Maps : \nFourchette de prix : \nHoraires : \nPaiements acceptés : \nSite (optionnel) : \n\n");
+        const sujet = encodeURIComponent('[FoodTrucks] Question');
         const lien = document.getElementById('lienMail');
-        lien.href = `mailto:${config.contactEmail}?subject=${sujet}&body=${corps}`;
+        lien.href = `mailto:${config.contactEmail}?subject=${sujet}`;
         lien.addEventListener('click', () => Commun.evenement('clic_mail'));
         document.getElementById('contact').hidden = false;
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
         creerBoutonsJours();
-        cases('casesJours', 'jours', JOURS);
         brancherFiltres();
         brancherListe();
-        document.getElementById('boutonSuggerer').addEventListener('click', ouvrirSuggestion);
-        document.getElementById('annulerSuggestion').addEventListener('click', fermerSuggestion);
-        formulaire.addEventListener('submit', envoyerSuggestion);
+        Fiche.initialiser({ apresChangement: () => charger(true) });
+        await Formulaires.initialiser({ ouvrirFiche: id => Fiche.ouvrir(id) });
+        document.getElementById('boutonAjouter').addEventListener('click', () => Formulaires.ouvrirAjout(async ft => {
+            await charger(true);
+            if (ft) Fiche.ouvrir(ft.id);
+        }));
         await configurer(); // listes des filtres avant le premier affichage
         charger();
     });

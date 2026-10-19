@@ -18,16 +18,85 @@
     </header>
 
     <main class="contenu large">
-        <section class="carte">
-            <h2>Suggestions à valider <span id="nbSuggestions"></span></h2>
-            <p class="aide">« Compléter et publier » charge la suggestion dans le formulaire ci-dessous : vérifiez, complétez
-                (lieu, paiements…) puis publiez. « Rejeter » la supprime.</p>
+        <section class="carte surveillance" id="surveillance" aria-labelledby="titreSurveillance">
+            <h2 id="titreSurveillance">À surveiller <span id="resumeSurveillance"></span></h2>
+            <p class="aide">Les collègues publient directement : vous n'intervenez qu'en cas de problème. Rien n'est perdu
+                (historique, suppression logique) ; « Supprimer définitivement » est réservé aux contenus illicites ou aux
+                demandes d'effacement.</p>
+
+            <div id="blocHeritees" hidden>
+                <h3>Suggestions héritées de l'ancienne file <span id="nbSuggestions"></span></h3>
+                <p class="aide">Envoyées avant la version 3.2.0. « Compléter et publier » les charge dans le formulaire
+                    ci-dessous ; « Écarter » les supprime. Les nouveaux ajouts sont publiés directement par les collègues.</p>
+                <div class="tableau-conteneur">
+                    <table class="tableau" id="tableSuggestions">
+                        <thead><tr><th>Nom</th><th>Type</th><th>Cuisine</th><th>Jours</th><th>Lieu / emplacement</th><th>Prix</th><th>Actions</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3>Signalements ouverts</h3>
             <div class="tableau-conteneur">
-                <table class="tableau" id="tableSuggestions">
-                    <thead><tr><th>Nom</th><th>Type</th><th>Cuisine</th><th>Jours</th><th>Lieu / emplacement</th><th>Prix</th><th>Actions</th></tr></thead>
+                <table class="tableau" id="tableSignalements">
+                    <thead><tr><th>Date</th><th>Établissement</th><th>Signalement</th><th>Précision / avis visé</th><th>Navigateur</th><th>Actions</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
+
+            <h3>Avis masqués automatiquement ou par vous</h3>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tableMasques">
+                    <thead><tr><th>Date</th><th>Établissement</th><th>Note</th><th>Avis</th><th>Signalements</th><th>Navigateur</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h3>Ajouts et modifications sensibles (nom, lieu, lien Maps, statut) — 30 derniers jours</h3>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tableModifications">
+                    <thead><tr><th>Date</th><th>Établissement</th><th>Action</th><th>Changements</th><th>Par</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h3>Établissements incertains ou archivés</h3>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tableHorsLigne">
+                    <thead><tr><th>Nom</th><th>Statut</th><th>Mis à jour</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h3>Fusionner deux fiches (doublons, établissement présent à plusieurs endroits)</h3>
+            <p class="aide">La fiche conservée reçoit les jours de l'autre (avec son lieu pour ces jours), ses étiquettes et paiements,
+                ses avis, présences et son historique. L'autre fiche disparaît (son contenu reste dans l'historique).</p>
+            <div class="barre-outils">
+                <div class="champ"><label for="fusionGarder">Fiche conservée</label><select id="fusionGarder"></select></div>
+                <div class="champ"><label for="fusionAbsorber">Fiche absorbée</label><select id="fusionAbsorber"></select></div>
+                <button type="button" class="bouton" id="boutonFusion">Fusionner</button>
+            </div>
+
+            <h3>Navigateurs bloqués</h3>
+            <ul id="listeBlocages"></ul>
+
+            <h3>Seuils</h3>
+            <form id="formSeuils" class="seuils" novalidate>
+                <div class="champ"><label for="s-signalementsMasquage">Avis masqué après N signalements « inapproprié » (navigateurs distincts)</label>
+                    <input type="number" id="s-signalementsMasquage" name="signalementsMasquage" min="1" max="50"></div>
+                <div class="champ"><label for="s-signalementsPlusPresent">« N'est plus présent » : nombre de navigateurs distincts</label>
+                    <input type="number" id="s-signalementsPlusPresent" name="signalementsPlusPresent" min="1" max="50"></div>
+                <div class="champ"><label for="s-joursIncertain">… et jours sans confirmation avant « incertain »</label>
+                    <input type="number" id="s-joursIncertain" name="joursIncertain" min="1" max="365"></div>
+                <div class="champ"><label for="s-joursArchive">… jours sans confirmation avant archivage</label>
+                    <input type="number" id="s-joursArchive" name="joursArchive" min="1" max="730"></div>
+                <div class="champ"><label for="s-delaiGraceMinutes">Délai de grâce de l'auteur d'un ajout (minutes)</label>
+                    <input type="number" id="s-delaiGraceMinutes" name="delaiGraceMinutes" min="0" max="1440"></div>
+                <div class="champ"><label for="s-joursBlocage">Durée d'un blocage (jours)</label>
+                    <input type="number" id="s-joursBlocage" name="joursBlocage" min="1" max="365"></div>
+                <p><button type="submit" class="bouton">Enregistrer les seuils</button></p>
+            </form>
+            <p><a class="lien-discret" href="/api/admin/export/avis.csv">Télécharger avis.csv</a></p>
         </section>
 
         <section class="carte" id="carteFormulaire">
@@ -52,6 +121,7 @@
                     <div class="champ"><label for="f-lieu">Lieu</label>
                         <select id="f-lieu" name="lieu"><option value="">(lieu à préciser)</option></select></div>
                     <div class="champ"><label for="f-emplacement">Lien Google Maps <small>(obligatoire sans lieu)</small></label><input type="url" id="f-emplacement" name="emplacement"></div>
+                    <div class="champ"><label for="f-lieux_jours">Lieu selon le jour <small>(ex : Jeudi=parking-nord;Vendredi=https://maps…)</small></label><input type="text" id="f-lieux_jours" name="lieux_jours" placeholder="Vide = lieu habituel tous les jours"></div>
                     <div class="champ"><label for="f-horaires">Horaires</label><input type="text" id="f-horaires" name="horaires" maxlength="60" placeholder="Ex : 11h30-14h"></div>
                     <div class="champ"><label for="f-prix">Prix (€)</label><input type="text" id="f-prix" name="prix" placeholder="Ex : 10-15"></div>
                     <div class="champ"><label for="f-site">Site web</label><input type="url" id="f-site" name="site"></div>
@@ -120,5 +190,6 @@
 
     <script src="/js/commun.js"></script>
     <script src="/admin/admin.js"></script>
+    <script src="/admin/surveillance.js"></script>
 </body>
 </html>

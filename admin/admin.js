@@ -1,8 +1,9 @@
-// Espace administrateur : suggestions, ajout / modification des établissements, lieux.
+// Espace administrateur : ajout / modification des établissements, lieux, suggestions héritées de l'ancienne file.
+// La partie « À surveiller » est dans surveillance.js.
 
 (() => {
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-    const CHAMPS_TEXTE = ['nom', 'type', 'cuisine', 'categorie', 'lieu', 'emplacement', 'horaires', 'prix', 'site', 'statut'];
+    const CHAMPS_TEXTE = ['nom', 'type', 'cuisine', 'categorie', 'lieu', 'lieux_jours', 'emplacement', 'horaires', 'prix', 'site', 'statut'];
     const LISTES = { jours: 'f-jours', etiquettes: 'f-etiquettes', paiements: 'f-paiements' };
     let publies = [];
     let lieux = [];
@@ -110,6 +111,7 @@
             message(reponse.message);
             reinitialiser();
             await Promise.all([chargerSuggestions(), chargerPublies(), chargerLieux()]);
+            if (window.Surveillance) window.Surveillance.charger();
         } catch (err) {
             afficherErreurs(err.details && err.details.length ? err.details : [err.message]);
         }
@@ -174,6 +176,7 @@
             return;
         }
         document.getElementById('nbSuggestions').textContent = suggestions.length ? `(${suggestions.length})` : '';
+        document.getElementById('blocHeritees').hidden = !suggestions.length;
         if (!suggestions.length) return ligneVide(tbody, 'Aucune suggestion en attente.', 7);
         const h = Commun.html;
         tbody.innerHTML = suggestions.map((ft, i) => {
@@ -182,7 +185,7 @@
             return `<tr data-index="${i}">
                 <td>${h(ft.nom)}</td><td>${h(ft.type)}</td><td>${h(ft.cuisine)}</td><td>${h(ft.jours.replace(/;/g, ', '))}</td>
                 <td>${nomLieu(ft.lieu) ? h(lieu) : lieu}</td><td>${h(Commun.formaterPrix(ft.prix))}</td>
-                <td class="actions"><button type="button" class="bouton succes petit" data-action="completer">Compléter et publier</button><button type="button" class="bouton danger petit" data-action="rejeter">Rejeter</button></td>
+                <td class="actions"><button type="button" class="bouton succes petit" data-action="completer">Compléter et publier</button><button type="button" class="bouton danger petit" data-action="rejeter">Écarter</button></td>
             </tr>`;
         }).join('');
     }
@@ -196,7 +199,7 @@
             editer({ type: 'suggestion', index, original }, original);
             return;
         }
-        if (!confirm(`Rejeter définitivement la suggestion « ${original.nom} » ?`)) return;
+        if (!confirm(`Écarter définitivement la suggestion « ${original.nom} » ?`)) return;
         try {
             const reponse = await Commun.api(`/api/admin/suggestions/${index}`, { method: 'DELETE', body: { original } });
             message(reponse.message);
@@ -248,7 +251,7 @@
             editer({ type: 'modification', original: ft }, ft);
             return;
         }
-        if (!confirm(`Supprimer définitivement « ${ft.nom} » ?\n\nPour un retrait temporaire, préférez « Modifier » puis le statut « Archivé ».`)) return;
+        if (!confirm(`Supprimer définitivement « ${ft.nom} », avec ses avis, présences, signalements et son historique ?\n\nPour un retrait temporaire, préférez « Modifier » puis le statut « Archivé » (restaurable). Pour un doublon, préférez la fusion.`)) return;
         try {
             const reponse = await Commun.api(`/api/admin/foodtrucks/${encodeURIComponent(ft.id)}`, { method: 'DELETE', body: { version: ft.version } });
             message(reponse.message);
@@ -321,6 +324,12 @@
             message(erreurVersTexte(err), 'erreur');
         }
     }
+
+    // Pour surveillance.js : modifier une fiche dans le formulaire, recharger les tableaux
+    window.Admin = {
+        modifier: ft => editer({ type: 'modification', original: ft }, ft),
+        recharger: () => Promise.all([chargerPublies(), chargerLieux()]),
+    };
 
     document.addEventListener('DOMContentLoaded', async () => {
         const config = await Commun.config();

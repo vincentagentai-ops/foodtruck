@@ -281,6 +281,10 @@ function creerApplication(config, options = {}) {
         const alias = await etablissements.alias();
         const anciens = Object.keys(alias).filter(a => alias[a] === ft.id);
         const entrees = (await etablissements.historique()).filter(e => e.cible === ft.id || anciens.includes(e.cible));
+        // Version d'avant la première modification enregistrée (fiches antérieures à l'historique) : restaurable aussi
+        const apres = new Set(entrees.filter(e => e.cible === ft.id && e.apres).map(e => e.apres.version));
+        const versionAvant = e => (e.cible === ft.id && e.avant && e.avant.version && !apres.has(e.avant.version)
+            && e.avant.version !== ft.version ? e.avant.version : '');
         res.json({
             version: ft.version,
             entrees: entrees.reverse().map(e => ({
@@ -291,6 +295,7 @@ function creerApplication(config, options = {}) {
                     champ: c, libelle: LIBELLES_CHAMPS[c] || c, avant: (e.avant || {})[c] || '', apres: (e.apres || {})[c] || '',
                 })),
                 restaurable: e.cible === ft.id && Boolean(e.apres) && e.apres.version !== ft.version,
+                versionAvant: versionAvant(e),
             })),
         });
     }));

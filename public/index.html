@@ -89,12 +89,19 @@
         </section>
 
         <section class="actions-bas">
-            <button type="button" id="boutonSuggerer" class="bouton">Suggérer un établissement</button>
+            <button type="button" id="boutonAjouter" class="bouton">+ Ajouter un établissement</button>
+            <p class="aide-collab">Tout le monde peut ajouter, corriger, confirmer la présence et donner son avis :
+                c'est publié tout de suite, et chaque modification peut être annulée depuis l'historique de la fiche.</p>
             <p id="contact" hidden>
-                Vous voyez une erreur ou vous avez une remarque ?
-                <a id="lienMail" href="#">Envoyez-moi un mail</a>
+                Une question, un problème ?
+                <a id="lienMail" href="#">Écrire à l'administrateur</a>
             </p>
-            <p class="aide-favoris">Les favoris (☆) et les filtres sont gardés dans ce navigateur uniquement.</p>
+            <p class="aide-favoris">Les favoris (☆), les filtres et votre nom déclaré sont gardés dans ce navigateur uniquement.</p>
+        </section>
+
+        <section class="carte quoi-de-neuf" aria-labelledby="titreQuoiDeNeuf">
+            <h2 id="titreQuoiDeNeuf">Quoi de neuf ?</h2>
+            <ul id="listeQuoiDeNeuf" class="fil"><li class="vide">Chargement…</li></ul>
         </section>
     </main>
 
@@ -104,15 +111,22 @@
         <span id="version"></span>
     </footer>
 
-    <dialog id="modaleSuggestion" class="modale" aria-labelledby="titreSuggestion">
-        <form id="formSuggestion" class="formulaire" novalidate>
-            <h2 id="titreSuggestion">Suggérer un établissement</h2>
-            <p class="aide">Votre suggestion sera publiée après validation par un administrateur.</p>
+    <!-- Fiche d'un établissement (contenu généré par fiche.js) -->
+    <dialog id="modaleFiche" class="modale modale-fiche" aria-labelledby="titreFiche">
+        <div id="contenuFiche"></div>
+    </dialog>
+
+    <!-- Ajout ou modification des infos d'un établissement (formulaires.js) -->
+    <dialog id="modaleFormulaire" class="modale modale-large" aria-labelledby="titreFormulaire">
+        <form id="formEtablissement" class="formulaire" novalidate>
+            <h2 id="titreFormulaire">Ajouter un établissement</h2>
+            <p class="aide" id="aideFormulaire">Publié immédiatement et visible par tous. Les champs marqués * sont obligatoires.</p>
 
             <div class="champ">
                 <label for="nom">Nom <span class="requis" aria-hidden="true">*</span></label>
-                <input type="text" id="nom" name="nom" required maxlength="80" placeholder="Ex : Moya">
+                <input type="text" id="nom" name="nom" required maxlength="80" placeholder="Ex : Moya" autocomplete="off">
             </div>
+            <div class="avertissement-doublon" id="doublons" hidden></div>
             <div class="grille-2">
                 <div class="champ">
                     <label for="type">Type</label>
@@ -134,14 +148,19 @@
                 <legend>Jours de présence <span class="requis" aria-hidden="true">*</span></legend>
                 <div class="cases-jours" id="casesJours"></div>
             </fieldset>
-            <div class="champ" id="champLieu" hidden>
-                <label for="lieu">Lieu (s'il est dans la liste)</label>
+            <div class="champ" id="champLieu">
+                <label for="lieu">Lieu habituel</label>
                 <select id="lieu" name="lieu"><option value="">(autre / je ne sais pas)</option></select>
             </div>
+            <details class="champ" id="detailsLieuxJours">
+                <summary>Lieu différent selon le jour</summary>
+                <p class="aide-petite">Pour un établissement qui change de place dans la semaine.</p>
+                <div id="lieuxJours"></div>
+            </details>
             <div class="champ">
-                <label for="emplacement">Emplacement Google Maps <span class="requis" aria-hidden="true">*</span></label>
+                <label for="emplacement">Lien Google Maps</label>
                 <input type="url" id="emplacement" name="emplacement" placeholder="Ex : https://maps.app.goo.gl/NK8QJSaoFYfszxq68">
-                <small>Dans Google Maps : « Partager » puis « Copier le lien ». Facultatif si vous avez choisi un lieu.</small>
+                <small>Dans Google Maps : « Partager » puis « Copier le lien ». Obligatoire si aucun lieu n'est choisi.</small>
             </div>
             <div class="grille-2">
                 <div class="champ">
@@ -157,21 +176,39 @@
                 <legend>Paiements acceptés</legend>
                 <div class="cases-jours" id="casesPaiements"></div>
             </fieldset>
+            <fieldset class="champ">
+                <legend>Particularités</legend>
+                <div class="cases-jours" id="casesEtiquettes"></div>
+            </fieldset>
             <div class="champ">
-                <label for="site">Site web</label>
+                <label for="site">Site web ou menu</label>
                 <input type="url" id="site" name="site" placeholder="Ex : https://www.exemple.fr">
             </div>
+            <div class="champ">
+                <label for="pseudoFormulaire">Votre nom (facultatif)</label>
+                <input type="text" id="pseudoFormulaire" maxlength="30" placeholder="Ex : Camille — sinon « Un collègue »" autocomplete="nickname">
+                <small>Affiché avec la mention « nom déclaré » ; il n'est pas vérifié.</small>
+            </div>
 
-            <ul class="erreurs" id="erreursSuggestion" hidden></ul>
-
+            <div class="conflit" id="conflit" hidden></div>
+            <ul class="erreurs" id="erreursFormulaire" hidden></ul>
+            <ul class="charte">
+                <li>Restez factuel et bienveillant.</li>
+                <li>Parlez des plats et du service, pas des personnes.</li>
+                <li>Pas de publicité ni d'informations personnelles.</li>
+                <li>Une information fausse ? Corrigez-la plutôt que de la supprimer.</li>
+                <li>Tout est historisé et peut être annulé par les collègues.</li>
+            </ul>
             <div class="boutons-modale">
-                <button type="button" class="bouton secondaire" id="annulerSuggestion">Annuler</button>
-                <button type="submit" class="bouton">Envoyer</button>
+                <button type="button" class="bouton secondaire" id="annulerFormulaire">Annuler</button>
+                <button type="submit" class="bouton" id="envoyerFormulaire">Publier</button>
             </div>
         </form>
     </dialog>
 
     <script src="/js/commun.js"></script>
+    <script src="/js/formulaires.js"></script>
+    <script src="/js/fiche.js"></script>
     <script src="/js/accueil.js"></script>
 </body>
 </html>
