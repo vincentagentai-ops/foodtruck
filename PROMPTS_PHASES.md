@@ -19,6 +19,8 @@ Mission : réaliser la PHASE 1 de la feuille de route.
 - Lis tout le code de src/, public/ et test/ : le projet est petit, respecte son style (noms et commentaires en français, JavaScript sans framework côté navigateur, tests node:test).
 - Vérifie que `main` est à jour et que package.json est en 3.0.0. Crée la branche `phase-1-socle-mesure`.
 - Lance `npm test` pour partir d'un état vert.
+- Ne me pose pas de question pendant le travail : en cas d'ambiguïté, choisis l'option la plus simple et cohérente avec l'audit et les décisions ci-dessous, et liste ces choix dans le compte rendu. Ne t'arrête que si la phase précédente n'est pas fusionnée.
+- Ne modifie jamais le dossier data/ du dépôt (il contient une copie des données de production) : pour les tests et les essais dans le navigateur, utilise un DATA_DIR temporaire contenant une copie de data-exemple/.
 
 2. DÉCISIONS DÉJÀ PRISES (ne pas les remettre en question)
 - Pas d'appui de l'équipe informatique : pas de HTTPS, pas de SSO, pas de changement DNS/proxy. Serveur Windows, un seul processus pm2, port 80.
@@ -84,6 +86,8 @@ Mission : réaliser la PHASE 2 de la feuille de route : transformer le site en o
 - Vérifie que la phase 1 est fusionnée dans main : package.json en 3.1.0, colonne id dans le CSV, POST /api/evenements, cookie ft_v. Sinon arrête-toi et signale-le.
 - Lis AUDIT_ET_PROPOSITIONS.md (Parties 4, 5 et 7 en priorité, §3.3), le CHANGELOG 3.1.0 et docs/DOSSIER_TECHNIQUE.md, puis tout le code. Respecte le style existant.
 - Crée la branche `phase-2-collaboration` depuis main ; `npm test` doit être vert au départ.
+- Ne me pose pas de question pendant le travail : en cas d'ambiguïté, choisis l'option la plus simple et cohérente avec l'audit et les décisions ci-dessous, et liste ces choix dans le compte rendu. Ne t'arrête que si la phase précédente n'est pas fusionnée.
+- Ne modifie jamais le dossier data/ du dépôt (il contient une copie des données de production) : pour les tests et les essais dans le navigateur, utilise un DATA_DIR temporaire contenant une copie de data-exemple/.
 
 2. DÉCISIONS DÉJÀ PRISES
 - Publication immédiate de toutes les contributions ; aucune validation préalable.
@@ -142,6 +146,8 @@ Mission : réaliser la PHASE 3 de la feuille de route : un tableau de bord de st
 - Vérifie que la phase 2 est fusionnée dans main (package.json en 3.2.0, avis et historique en JSONL). Sinon arrête-toi et signale-le.
 - Lis AUDIT_ET_PROPOSITIONS.md §2.9 et Partie 6 (§6.1 à 6.4 et 6.9), le CHANGELOG 3.1.0 et 3.2.0, puis src/statistiques.js, les modules d'audience et d'agrégats de la phase 1, et public/admin/statistiques.*.
 - Crée la branche `phase-3-statistiques` ; `npm test` vert au départ.
+- Ne me pose pas de question pendant le travail : en cas d'ambiguïté, choisis l'option la plus simple et cohérente avec l'audit et les décisions ci-dessous, et liste ces choix dans le compte rendu. Ne t'arrête que si la phase précédente n'est pas fusionnée.
+- Ne modifie jamais le dossier data/ du dépôt (il contient une copie des données de production) : pour les tests et les essais dans le navigateur, utilise un DATA_DIR temporaire contenant une copie de data-exemple/.
 
 2. DÉCISIONS DÉJÀ PRISES
 - Aucune statistique nominative : tout est calculé sur l'identifiant anonyme de navigateur (HMAC), jamais affiché ni exporté.
@@ -186,6 +192,8 @@ Mission : réaliser la PHASE 4 de la feuille de route : des améliorations de co
 - Vérifie que la phase 3 est fusionnée dans main (package.json en 3.3.0). Sinon arrête-toi et signale-le.
 - Lis AUDIT_ET_PROPOSITIONS.md §3.2 et Partie 4, le CHANGELOG des versions 3.1 à 3.3, puis le code front (public/) et les routes concernées.
 - Crée la branche `phase-4-confort` ; `npm test` vert au départ.
+- Ne me pose pas de question pendant le travail : en cas d'ambiguïté, choisis l'option la plus simple et cohérente avec l'audit et les décisions ci-dessous, et liste ces choix dans le compte rendu. Ne t'arrête que si la phase précédente n'est pas fusionnée.
+- Ne modifie jamais le dossier data/ du dépôt (il contient une copie des données de production) : pour les tests et les essais dans le navigateur, utilise un DATA_DIR temporaire contenant une copie de data-exemple/.
 
 2. DÉCISIONS DÉJÀ PRISES
 - Postes de travail uniquement, pas de HTTPS (l'API presse-papiers et la géolocalisation ne sont pas disponibles en HTTP : prévoir un repli par sélection du texte ; pas de géolocalisation).
