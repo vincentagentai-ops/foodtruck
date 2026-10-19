@@ -172,7 +172,8 @@ function creerApplication(config, options = {}) {
     // Navigateur de l'administrateur : noté une fois par démarrage (évènement admin_vu) pour être exclu de l'audience
     const navigateursAdmin = new Set();
     function noterNavigateurAdmin(req) {
-        if (!req.idNavigateur || navigateursAdmin.has(req.idNavigateur)) return;
+        // Sans cookie déjà présent (outil, script, première requête) : rien à exclure, rien n'est écrit
+        if (!req.cookieExistant || navigateursAdmin.has(req.idNavigateur)) return;
         navigateursAdmin.add(req.idNavigateur);
         evenement(req, 'admin_vu');
     }

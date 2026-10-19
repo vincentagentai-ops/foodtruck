@@ -18,97 +18,160 @@
     </header>
 
     <main class="contenu">
+        <!-- Période -->
         <section class="carte">
-            <form class="barre-outils" id="formPeriode">
-                <div class="champ"><label for="debut">Du</label><input type="date" id="debut"></div>
-                <div class="champ"><label for="fin">Au</label><input type="date" id="fin"></div>
-                <button type="submit" class="bouton">Filtrer</button>
-                <button type="button" class="bouton secondaire" data-periode="7">7 derniers jours</button>
-                <button type="button" class="bouton secondaire" data-periode="30">30 derniers jours</button>
-                <button type="button" class="bouton secondaire" data-periode="tout">Tout</button>
+            <div class="periodes" role="group" aria-label="Période">
+                <button type="button" class="periode" data-periode="7" aria-pressed="false">7 jours</button>
+                <button type="button" class="periode" data-periode="30" aria-pressed="true">30 jours</button>
+                <button type="button" class="periode" data-periode="90" aria-pressed="false">Trimestre</button>
+                <button type="button" class="periode" data-periode="perso" aria-pressed="false">Personnalisée</button>
+                <button type="button" class="periode" data-periode="tout" aria-pressed="false">Tout</button>
+            </div>
+            <form class="barre-outils espace-haut" id="formPeriode" hidden>
+                <div class="champ"><label for="debut">Du</label><input type="date" id="debut" required></div>
+                <div class="champ"><label for="fin">Au</label><input type="date" id="fin" required></div>
+                <button type="submit" class="bouton">Afficher</button>
             </form>
-            <p class="aide" id="infoPeriode"></p>
+            <p class="aide-petite" id="infoPeriode"></p>
             <p class="rupture" id="rupture" hidden></p>
         </section>
 
-        <div class="chiffres">
-            <div class="chiffre"><div class="valeur" id="cJour">–</div><div class="libelle">Navigateurs actifs par jour <small>(moyenne des jours avec visites)</small></div></div>
-            <div class="chiffre"><div class="valeur" id="cSemaine">–</div><div class="libelle">Navigateurs actifs par semaine <small>(moyenne)</small></div></div>
-            <div class="chiffre"><div class="valeur" id="cMois">–</div><div class="libelle">Navigateurs actifs par mois <small>(moyenne)</small></div></div>
-            <div class="chiffre"><div class="valeur" id="cNouveaux">–</div><div class="libelle">Nouveaux navigateurs</div></div>
-            <div class="chiffre"><div class="valeur" id="cPages">–</div><div class="libelle">Pages vues <small>(pages publiques, hors robots et erreurs)</small></div></div>
-            <div class="chiffre"><div class="valeur" id="cSuggestions">–</div><div class="libelle">Établissements ajoutés <small>(suggestions avant la 3.2.0, ajouts directs ensuite ; comptés par le serveur)</small></div></div>
+        <!-- Tuiles : l'essentiel en 30 secondes -->
+        <div class="chiffres tuiles">
+            <div class="chiffre"><div class="valeur" id="tJour">–</div><div class="delta" id="dJour"></div>
+                <div class="libelle">Navigateurs actifs par jour <small>≈ collègues ; moyenne des jours avec visites</small></div></div>
+            <div class="chiffre"><div class="valeur" id="tSemaine">–</div><div class="delta" id="dSemaine"></div>
+                <div class="libelle">Navigateurs actifs par semaine <small>sur 7 jours glissants (moyenne)</small></div></div>
+            <div class="chiffre"><div class="valeur" id="tNouveaux">–</div><div class="delta" id="dNouveaux"></div>
+                <div class="libelle">Nouveaux navigateurs <small>vus pour la première fois</small></div></div>
+            <div class="chiffre"><div class="valeur" id="tRetour">–</div><div class="delta" id="dRetour"></div>
+                <div class="libelle">Retour à S+1 <small id="tRetourDetail">part des navigateurs d'une semaine revenus la suivante</small></div></div>
+            <div class="chiffre"><div class="valeur" id="tContrib">–</div><div class="delta" id="dContrib"></div>
+                <div class="libelle">Contributions <small id="tContribDetail">ajouts, modifications, avis, présences, signalements</small></div></div>
         </div>
 
         <section class="carte">
-            <h2>Fréquentation par jour</h2>
-            <div class="graphique"><canvas id="gDates" aria-label="Navigateurs actifs et pages vues par jour"></canvas></div>
+            <h2>Fréquentation</h2>
+            <p class="aide">Navigateurs actifs chaque jour et sur 7 jours glissants. Les traits verticaux marquent les mises en service de nouvelles versions.</p>
+            <div class="graphique grand"><canvas id="gFrequentation" aria-label="Navigateurs actifs par jour et sur 7 jours glissants"></canvas></div>
+        </section>
+
+        <div class="grille grille-large">
+            <section class="carte">
+                <h2>Nouveaux et récurrents par semaine</h2>
+                <p class="aide">Nouveau : vu pour la première fois cette semaine-là. Récurrent : déjà venu avant.</p>
+                <div class="graphique"><canvas id="gSemaines" aria-label="Navigateurs nouveaux et récurrents par semaine"></canvas></div>
+            </section>
+            <section class="carte">
+                <h2>Jours et heures de visite</h2>
+                <p class="aide">Navigateurs actifs par heure et par jour de la semaine, additionnés sur la période. Plus la case est foncée, plus il y a de monde.</p>
+                <div class="tableau-conteneur"><table class="chaleur" id="tChaleur" aria-label="Navigateurs actifs par jour de la semaine et par heure"></table></div>
+            </section>
+        </div>
+
+        <div class="grille grille-large">
+            <section class="carte">
+                <h2>De la visite au déplacement</h2>
+                <p class="aide">Visites (suite de pages et de clics sans pause de plus de 30 min) qui ouvrent une fiche, puis cliquent vers Google Maps ou le site.</p>
+                <div id="entonnoir" class="barres"></div>
+            </section>
+            <section class="carte">
+                <h2>Fonctionnalités utilisées</h2>
+                <p class="aide">Part des visites qui utilisent chaque fonctionnalité au moins une fois.</p>
+                <div id="fonctionnalites" class="barres"></div>
+            </section>
+        </div>
+
+        <section class="carte">
+            <h2>Établissements</h2>
+            <p class="aide">Fiches ouvertes, clics et confirmations « Il est là » sur la période ; avis et note : situation actuelle (note affichée à partir de 3 avis).</p>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tEtablissements">
+                    <thead><tr><th>Établissement</th><th>Fiches ouvertes</th><th>Clics site</th><th>Clics Maps</th><th>Présences confirmées</th><th>Avis</th><th>Note</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="grille grille-large">
+            <section class="carte">
+                <h2>Contributions par semaine</h2>
+                <p class="aide" id="retourContributeurs"></p>
+                <div class="graphique"><canvas id="gContributions" aria-label="Contributions par type et par semaine"></canvas></div>
+            </section>
+            <section class="carte">
+                <h2>Fidélité par cohorte</h2>
+                <p class="aide">Navigateurs arrivés une semaine donnée (cohorte) et part encore actifs les semaines suivantes.</p>
+                <div class="tableau-conteneur"><table class="tableau cohortes" id="tCohortes"><thead></thead><tbody></tbody></table></div>
+            </section>
+        </div>
+
+        <section class="carte">
+            <h2>Recherches sans résultat</h2>
+            <p class="aide">Textes cherchés (30 premiers caractères) qui n'ont rien donné parmi les établissements du jour affiché : utile pour repérer un établissement ou une cuisine manquants.</p>
+            <table class="tableau" id="tRecherches"><thead><tr><th>Recherche</th><th>Nombre</th></tr></thead><tbody></tbody></table>
         </section>
 
         <section class="carte">
-            <h2>Nouveaux et récurrents par semaine</h2>
-            <p class="aide">Nouveau : navigateur vu pour la première fois cette semaine-là. Récurrent : déjà venu avant.</p>
-            <div class="graphique"><canvas id="gSemaines" aria-label="Navigateurs nouveaux et récurrents par semaine"></canvas></div>
+            <h2>Exporter</h2>
+            <p class="aide">Agrégats de la période affichée, au format CSV (Excel), sans aucun identifiant de navigateur.</p>
+            <div class="barre-outils">
+                <a class="bouton secondaire" id="exportJours" href="/api/admin/export/statistiques.csv?niveau=jours">Par jour</a>
+                <a class="bouton secondaire" id="exportSemaines" href="/api/admin/export/statistiques.csv?niveau=semaines">Par semaine</a>
+                <a class="bouton secondaire" id="exportEtablissements" href="/api/admin/export/statistiques.csv?niveau=etablissements">Par établissement</a>
+            </div>
         </section>
-
-        <div class="grille">
-            <section class="carte">
-                <h2>Jours consultés</h2>
-                <p class="aide">Clics sur un bouton de jour (l'affichage initial n'est plus compté).</p>
-                <div class="graphique"><canvas id="gJours" aria-label="Clics par jour de la semaine"></canvas></div>
-            </section>
-            <section class="carte">
-                <h2>Activité par heure</h2>
-                <p class="aide">Navigateurs actifs dans chaque tranche horaire, additionnés sur la période.</p>
-                <div class="graphique"><canvas id="gHeures" aria-label="Navigateurs actifs par heure"></canvas></div>
-            </section>
-        </div>
-
-        <div class="grille">
-            <section class="carte">
-                <h2>Utilisation des fonctions</h2>
-                <table class="tableau" id="tEvenements"><thead><tr><th>Action</th><th>Nombre</th></tr></thead><tbody></tbody></table>
-            </section>
-            <section class="carte">
-                <h2>Établissements consultés</h2>
-                <p class="aide">Clics (gauche ou molette) sur « Site / menu » et « Plan Google Maps ».</p>
-                <table class="tableau" id="tConsultes"><thead><tr><th>Établissement</th><th>Site</th><th>Maps</th><th>Ancien calcul</th></tr></thead><tbody></tbody></table>
-            </section>
-        </div>
 
         <details class="carte">
             <summary>Détails techniques</summary>
             <div class="grille espace-haut">
                 <section>
-                    <h3>Pages vues</h3>
-                    <table class="tableau" id="tPages"><thead><tr><th>Page</th><th>Vues</th></tr></thead><tbody></tbody></table>
+                    <h3>Serveur</h3>
+                    <table class="tableau" id="tTechnique"><thead><tr><th>Mesure</th><th>Valeur</th></tr></thead><tbody></tbody></table>
                 </section>
                 <section>
                     <h3>Navigateurs</h3>
                     <table class="tableau" id="tNavigateurs"><thead><tr><th>Navigateur</th><th>Actifs (jours cumulés)</th></tr></thead><tbody></tbody></table>
                 </section>
                 <section>
-                    <h3>Par mois</h3>
-                    <table class="tableau" id="tMois"><thead><tr><th>Mois</th><th>Actifs</th><th>Nouveaux</th><th>Récurrents</th><th>IP (ancien)</th></tr></thead><tbody></tbody></table>
+                    <h3>Pages vues</h3>
+                    <table class="tableau" id="tPages"><thead><tr><th>Page</th><th>Vues</th></tr></thead><tbody></tbody></table>
                 </section>
                 <section>
-                    <h3>Serveur</h3>
-                    <table class="tableau" id="tTechnique"><thead><tr><th>Mesure</th><th>Valeur</th></tr></thead><tbody></tbody></table>
+                    <h3>Jours consultés</h3>
+                    <p class="aide-petite">Clics sur un bouton de jour (l'affichage initial n'est pas compté).</p>
+                    <table class="tableau" id="tJours"><thead><tr><th>Jour</th><th>Clics</th></tr></thead><tbody></tbody></table>
+                </section>
+                <section>
+                    <h3>Par mois</h3>
+                    <table class="tableau" id="tMois"><thead><tr><th>Mois</th><th>Actifs</th><th>Nouveaux</th><th>Retour M+1</th><th>IP (ancien)</th></tr></thead><tbody></tbody></table>
+                </section>
+                <section>
+                    <h3>Tous les évènements</h3>
+                    <table class="tableau" id="tEvenements"><thead><tr><th>Évènement</th><th>Nombre</th></tr></thead><tbody></tbody></table>
                 </section>
             </div>
         </details>
 
-        <section class="carte limites">
-            <h2>Limites de mesure</h2>
+        <section class="carte limites" aria-labelledby="titreLimites">
+            <h2 id="titreLimites">Limites de mesure</h2>
             <ul>
                 <li>Les chiffres comptent des <strong>navigateurs</strong>, pas des personnes : une même personne sur deux
                     postes ou deux navigateurs compte deux fois ; effacer ses cookies ou naviguer en privé crée un « nouveau »
-                    navigateur. Les tendances restent fiables, les valeurs absolues sont approchées (≈ collègues).</li>
+                    navigateur ; plusieurs personnes sur un même poste ne comptent qu'une fois. Suivez les <strong>tendances</strong> :
+                    les valeurs absolues sont approchées (≈ collègues).</li>
                 <li>Le cookie anonyme dure 13 mois : au-delà, un navigateur réapparaît comme nouveau.</li>
-                <li>Sont exclus : l'administration, les appels techniques, les erreurs, les redirections et les robots.</li>
+                <li>Une <strong>visite</strong> s'arrête après 30 minutes sans activité, et à minuit.</li>
+                <li>Sont exclus : l'administration (y compris les pages publiques ouvertes depuis le navigateur de
+                    l'administrateur, à partir du jour où il s'est connecté), les appels techniques, les erreurs, les redirections et les robots.</li>
+                <li>Les <strong>contributions</strong> sont comptées par le serveur, sans lien avec les visites : on ne peut pas savoir
+                    quelles pages a vues un contributeur. Les contributeurs distincts et leur retour sont comptés sur les contributions
+                    elles-mêmes ; les présences de plus de 13 mois sont purgées (leurs totaux sont gardés, pas leurs auteurs).</li>
                 <li>Avant la version 3.1.0, les visiteurs étaient comptés par <strong>adresse IP</strong> (série « ancien calcul »)
-                    et le jour affiché au chargement était compté comme un clic : ces anciennes valeurs ne sont pas comparables.</li>
-                <li>Aucune statistique nominative : rien ne permet de savoir qui a consulté quoi.</li>
+                    et le jour affiché au chargement était compté comme un clic : ces anciennes valeurs ne sont pas comparables.
+                    Visites, fiches et recherches sans résultat n'existent qu'à partir de la 3.2.0 / 3.3.0.</li>
+                <li>Aucune statistique nominative : rien ne permet de savoir qui a consulté quoi. Ces chiffres ne doivent pas servir
+                    à évaluer ou contrôler des collègues.</li>
             </ul>
         </section>
     </main>

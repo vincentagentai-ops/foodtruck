@@ -443,6 +443,32 @@ code { background: var(--survol); padding: 1px 5px; border-radius: 4px; }
 .seuils { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .seuils input { width: 100%; padding: 8px 10px; border: 1px solid var(--bordure); border-radius: 8px; font: inherit; }
 
+/* --- Tableau de bord des statistiques (3.3.0) */
+.periodes { display: flex; flex-wrap: wrap; gap: 8px; }
+.periode {
+    border: 1px solid var(--bordure); background: var(--surface); color: var(--texte); padding: 8px 16px;
+    border-radius: 999px; font: inherit; font-weight: 500; cursor: pointer;
+}
+.periode:hover { border-color: var(--primaire-clair); background: var(--survol); }
+.periode[aria-pressed="true"] { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+.tuiles .chiffre .valeur { font-variant-numeric: tabular-nums; }
+.delta { font-size: 0.85rem; min-height: 1.2em; color: var(--texte-2); }
+.delta.hausse { color: var(--succes); }
+.delta.baisse { color: var(--erreur); }
+.graphique.grand { height: 320px; }
+.grille-large { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); margin-bottom: 0; }
+.grille-large > .carte { min-width: 0; }
+.chaleur { border-collapse: separate; border-spacing: 2px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.chaleur th { font-weight: 500; color: var(--texte-2); padding: 2px 4px; }
+.chaleur td { min-width: 30px; height: 28px; text-align: center; border-radius: 4px; background: var(--surface-alt); color: var(--texte); }
+.barres { display: flex; flex-direction: column; gap: 12px; }
+.barre-libelle { display: flex; justify-content: space-between; gap: 8px; font-size: 0.92rem; }
+.barre-valeur { font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.barre-valeur small { font-weight: 400; color: var(--texte-2); }
+.barre-fond { height: 10px; background: var(--surface-alt); border: 1px solid var(--bordure); border-radius: 999px; overflow: hidden; margin-top: 4px; }
+.barre-plein { height: 100%; width: 0; background: var(--primaire); border-radius: 999px; }
+.cohortes td, .cohortes th { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 /* --- Téléphone : le tableau public devient une liste de fiches */
 @media (max-width: 640px) {
     .entete { flex-direction: column; gap: 8px; }
