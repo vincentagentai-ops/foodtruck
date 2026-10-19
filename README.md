@@ -1,7 +1,9 @@
 # Food Trucks
 
 Site interne et **collaboratif** qui liste les foodtrucks et restaurants autour du travail (Basso Cambo), jour par
-jour : recherche, filtres, regroupement par lieu, favoris ; les collègues ajoutent, corrigent, confirment la présence
+jour ou sur la semaine : recherche, filtres, regroupement par lieu et plan local des emplacements, favoris,
+préférences, « déjà essayé / à tester », carnet personnel (dans le navigateur), liens partageables et « Copier pour
+Teams », thème sombre ; les collègues ajoutent, corrigent, confirment la présence
 du jour, donnent leur avis et signalent, sans validation préalable (historique et restauration, seuils automatiques,
 page « À surveiller » pour l'administrateur) ; statistiques d'usage anonymes.
 Node.js + Express, catalogue en CSV et contributions en JSONL, sans base de données ni dépendance Internet.
@@ -40,4 +42,4 @@ temporaire : `DATA_DIR=/tmp/essai-ft BACKUP_DIR=/tmp/essai-ft-sauvegardes npm st
 server.js  src/  public/  admin/  test/  docs/  scripts/  data-exemple/  data/ et sauvegardes/ (hors git)
 ```
 
-Version actuelle : **3.1.0**.
+Version actuelle : **3.4.0**.

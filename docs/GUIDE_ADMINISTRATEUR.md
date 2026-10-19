@@ -111,6 +111,38 @@ d'accueil, du plus proche au plus loin.
 - **Modifier** : changez les champs de la ligne puis **Enregistrer**.
 - **Supprimer** n'est possible que si aucun établissement n'utilise le lieu (comme lieu habituel ou pour un jour).
 
+## Plan des emplacements
+
+Section **Plan des emplacements** (sous **Lieux**) : une image du quartier affichée sur la page d'accueil, dépliable,
+avec les **lieux du jour numérotés** du plus proche au plus loin (même numéro que le titre du lieu dans la liste). Elle
+remplace Google Maps pour l'essentiel, **sans Internet** ; les liens Maps restent en complément.
+
+1. **Préparer l'image** : capture d'écran d'un plan (outil Capture d'écran de Windows : Win+Maj+S, puis enregistrer),
+   photo ou scan d'un plan dessiné… Formats **PNG, JPEG ou WebP**, **3 Mo au plus** (une capture d'écran fait en
+   général quelques centaines de Ko). Cadrez large : tous les lieux doivent être dessus. Pas de SVG ni de PDF (refusés).
+2. **Image du plan** → choisir le fichier → **Enregistrer cette image**. Elle est enregistrée dans
+   `data\plan-image.png` (ou `.jpg`, `.webp`) et sauvegardée chaque jour avec les données. Une nouvelle image remplace
+   l'ancienne ; **les positions sont gardées** : vérifiez-les si le cadrage a changé.
+3. **Placer les lieux** : choisissez un lieu dans **Lieu à placer**, puis **cliquez sur le plan** à son emplacement.
+   Le lieu suivant non placé est proposé automatiquement. Les lieux placés sont précédés de ✓. Pour corriger, choisissez
+   le lieu et cliquez ailleurs. Au clavier : donnez le focus au plan (Tab), flèches pour déplacer le repère (Maj +
+   flèche : par pas de 5 %), **Entrée** pour enregistrer, **Échap** pour annuler.
+4. **retirer du plan** (liste à droite) enlève un lieu ; **Retirer le plan** enlève l'image (les positions sont
+   gardées pour une prochaine image). Un lieu supprimé est aussi retiré du plan.
+
+Un lieu du jour pas encore placé figure dans la légende avec « pas encore placé sur le plan ». Les établissements
+sans lieu (« Lieu à préciser ») n'apparaissent pas sur le plan.
+
+## Après la mise à jour 3.4.0
+
+1. Déposez le **plan des emplacements** et placez les lieux (ci-dessus) ; sans plan, la page d'accueil ne montre
+   simplement pas la rubrique.
+2. Ouvrez la page d'accueil, dépliez le plan et vérifiez la numérotation sur un jour chargé.
+3. Annoncez aux collègues les nouveautés : vue **Semaine**, **Mes préférences**, **Déjà essayé / À tester**,
+   **Mon carnet**, **Copier pour Teams** et les liens partageables (voir le guide utilisateur).
+4. Dans **Statistiques**, les nouvelles fonctionnalités apparaissent dans « Fonctionnalités utilisées » au fil des
+   visites (trait `v3.4.0` sur la courbe).
+
 ## Après la mise à jour 3.3.0
 
 1. Ouvrez **Statistiques** : la première ouverture (ou la maintenance au démarrage) recalcule les statistiques depuis
@@ -141,7 +173,7 @@ Comptez environ une heure pour :
 ## Sauvegarder et restaurer
 
 - **Automatique** : chaque jour (au démarrage puis toutes les heures, une seule copie par jour), le site copie les
-  fichiers `.csv`, `.json` et `.jsonl` de `data\` dans `sauvegardes\AAAA-MM-JJ\` (à côté de `data\`, ou dans
+  fichiers `.csv`, `.json`, `.jsonl` et l'image du plan de `data\` dans `sauvegardes\AAAA-MM-JJ\` (à côté de `data\`, ou dans
   `BACKUP_DIR`). Les 30 dernières copies sont gardées. Pensez à faire copier ce dossier ailleurs (autre disque,
   sauvegarde du serveur).
 - **Manuelle** : bouton **Télécharger le CSV (sauvegarde)** (établissements, ouvrable dans Excel), liens
@@ -197,8 +229,10 @@ minuit). Sauf pour « Tout », chaque tuile est comparée à la **période préc
   clics faits directement depuis la liste.
 - **Fonctionnalités utilisées** : part des visites qui utilisent au moins une fois la fiche, Maps, le site, le
   changement de jour, la recherche, les filtres, le classement, « Au hasard », les favoris, « Nouveaux / Quoi de
-  neuf », l'historique, les formulaires. Le bandeau « Vos favoris présents aujourd'hui » n'est pas mesuré (il
-  s'affiche sans clic).
+  neuf », l'historique, les formulaires et, depuis la 3.4.0, la vue semaine, les marques « Déjà essayé / À tester »,
+  « Copier pour Teams », l'arrivée par un lien partagé, les préférences, le carnet et le plan des emplacements. Le
+  bandeau « Vos favoris présents aujourd'hui » n'est pas mesuré (il s'affiche sans clic). Seul l'**usage** est compté :
+  le contenu des favoris, préférences, marques et carnets reste dans les navigateurs et n'est jamais envoyé au serveur.
 - **Établissements** : fiches ouvertes, clics vers le site et vers Maps, confirmations « Il est là » sur la période ;
   nombre d'avis et note **actuels** (note affichée à partir de 3 avis, comme sur le site).
 - **Contributions par semaine** : barres par type et courbe des contributeurs distincts. Au-dessus : nombre de
@@ -275,6 +309,7 @@ Les données sont dans `data\` :
 | `presences.jsonl` | Confirmations « Il est là » / « Pas là aujourd'hui » (purgées après 13 mois ; totaux dans `stats-presences.json`) |
 | `signalements.jsonl` | Signalements et leur clôture |
 | `config-moderation.json` | Seuils et navigateurs bloqués |
+| `plan.json`, `plan-image.png` (ou `.jpg`, `.webp`) | Plan des emplacements : description de l'image et position de chaque lieu (en % de la largeur et de la hauteur) ; l'image elle-même |
 | `foodtruckAValider.csv` | Suggestions héritées (ancienne file), jusqu'à leur traitement |
 | `usage-AAAA-MM.jsonl` | Évènements d'audience du mois (empreinte anonyme du navigateur, sans IP) |
 | `acces-AAAA-MM.log` | Journal technique du mois (adresses IP) |

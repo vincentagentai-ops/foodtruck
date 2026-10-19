@@ -1,4 +1,4 @@
-# Dossier technique — Food Trucks (v3.3.0)
+# Dossier technique — Food Trucks (v3.4.0)
 
 ## 1. Architecture
 
@@ -15,7 +15,7 @@ Navigateur ──HTTP──> Node.js (Express 4)
 ```
 
 - **Node.js ≥ 20.12** (testé en 24), **Express 4**, **nodemailer**, **Chart.js 4** (servi localement). Aucune nouvelle
-  dépendance en 3.1.0, 3.2.0 ni 3.3.0 (cookies, HMAC, limites, sauvegardes, distance d'édition, statistiques : JavaScript
+  dépendance en 3.1.0, 3.2.0, 3.3.0 ni 3.4.0 (cookies, HMAC, limites, sauvegardes, distance d'édition, statistiques : JavaScript
   pur / modules intégrés de Node ; carte de chaleur et barres du tableau de bord en HTML).
 - Une seule instance (les écritures sont sérialisées dans le processus, compteurs de limites en mémoire) ; pm2.
 
@@ -43,16 +43,19 @@ src/
   sauvegarde.js         copie quotidienne de data/ et rotation
   maintenance.js        enchaînement quotidien (sauvegarde, rotation, agrégats, purges, seuils), relancé toutes les heures
   limites.js            limites de fréquence en mémoire (par IP et par navigateur)
+  plan.js               plan local des emplacements (3.4.0) : image (PNG/JPEG/WebP reconnus à leurs octets), positions
 public/                 pages publiques : index.html, confidentialite.html, 404.html, css/, img/,
-                        js/commun.js, js/accueil.js (liste), js/fiche.js (fiche), js/formulaires.js (ajout / modification)
-admin/                  pages protégées (hors de public/) : index.html + admin.js + surveillance.js (« À surveiller »),
-                        statistiques.html + statistiques.js
+                        js/commun.js, js/accueil.js (liste, vue semaine, plan, carnet), js/fiche.js (fiche),
+                        js/formulaires.js (ajout / modification), js/logique.js (logique sans DOM, partagée avec les
+                        tests), js/perso.js (données personnelles dans localStorage), js/confidentialite.js
+admin/                  pages protégées (hors de public/) : index.html + admin.js + surveillance.js (« À surveiller »)
+                        + plan.js (plan des emplacements), statistiques.html + statistiques.js
 data/                   données d'exploitation (hors git)
 sauvegardes/            copies quotidiennes (hors git ; BACKUP_DIR)
 data-exemple/           jeu de données de référence au format 3.1.0
 scripts/                livraison (sh) et scripts Windows (installation, mise à jour, démarrage)
 test/                   tests node:test : unitaires, API, données (migration, agrégats, purge, sauvegarde), collaboration,
-                        statistiques (tableau de bord 3.3.0)
+                        statistiques (tableau de bord 3.3.0), logique de la page d'accueil, plan, accessibilité (3.4.0)
 docs/                   documentation
 ```
 
@@ -67,6 +70,8 @@ docs/                   documentation
 | `presences.jsonl` | `{ts, date, cible, auteur, etat}` | Présence du jour | 13 mois (totaux dans `stats-presences.json`, sans limite) |
 | `signalements.jsonl` | `{ts, id, cible, type, date?, texte?, avis?, auteur, action}` | Signalements et clôtures | — |
 | `config-moderation.json` | `{seuils, blocages}` | Seuils et blocages | — |
+| `plan.json` | `{image: {fichier, type, taille, maj} \| null, positions: {idLieu: {x, y}}}` (x, y en % de l'image, 1 décimale) | Plan des emplacements | — |
+| `plan-image.png` / `.jpg` / `.webp` | image (3 Mo au plus) | Image du plan (un seul fichier : l'ancien format est supprimé au remplacement) | — |
 | `foodtruckAValider.csv` | mêmes colonnes que le catalogue (l'ancien format sans en-tête reste lu) | Suggestions héritées (avant 3.2.0) | jusqu'au traitement |
 | `usage-AAAA-MM.jsonl` | `{ts, v, type, cible, page, version[, nav]}` | Évènements d'audience (v = HMAC du cookie) | 13 mois |
 | `acces-AAAA-MM.log` | `{timestamp, ip, url, method, status, durationMs, userAgent}` | Journal technique | 13 mois |
@@ -126,6 +131,39 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
 - **Purge des présences** : comme les journaux (§4) : totaux par jour et par fiche écrits dans `stats-presences.json`,
   relus, puis seulement réécriture de `presences.jsonl` sans les lignes de plus de 13 mois.
 
+## 4 ter. Confort (3.4.0) : logique côté navigateur et plan
+
+- **Données personnelles dans le navigateur uniquement** (`localStorage`, `perso.js`) : `ft_favoris`, `ft_filtres`,
+  `ft_pseudo` (existants), `ft_preferences` `{filtres, privilegier[]}`, `ft_marques` `{id: essaye|a_tester}`,
+  `ft_carnet` `[{id, nom, date}]` (500 entrées au plus), `ft_hasard_non_essaye`, `ft_plan_ouvert`. Rien n'est envoyé
+  au serveur ; seuls des évènements d'usage typés le sont (ci-dessous). Fiches fusionnées : marques et carnet suivent
+  l'alias (`Logique.suivreAlias`). Lecture défensive (`nettoyerCarnet`, `nettoyerPreferences`, `nettoyerFiltres`).
+- **`public/js/logique.js`** : fonctions pures, chargées par la page (objet global `Logique`) et par `require` dans
+  les tests : `correspond` (filtres + recherche + « Déjà essayé ? »), `tirerAuHasard` (`nonEssaye`, `exclure` = tirage
+  précédent sauf candidat unique, `aleatoire` injectable), `construireLien` / `lireLien`, `texteTeams`, carnet,
+  préférences (`scorePreference` : tri dans chaque lieu), `numeroterLieux`.
+- **Liens partageables** : `?jour=jeudi&vue=semaine&q=…&categorie=…&prix=12&type=…&etiquette=…&paiement=…&essai=pas_essaye&tri=prix&fiche=<id>`
+  (ordre stable ; `jour` omis s'il est le jour par défaut, `tri=lieu` omis). L'adresse est tenue à jour par
+  `history.replaceState` (pas d'entrée d'historique). À l'ouverture, un lien reconnu l'emporte sur les filtres
+  mémorisés **sans les écraser** (ils ne sont réécrits qu'à un changement fait par l'utilisateur) ; sinon les filtres
+  par défaut des préférences, sinon les derniers filtres. Valeurs inconnues ignorées, textes tronqués à 80 caractères.
+- **« Copier pour Teams »** : `navigator.clipboard` n'existe qu'en contexte sécurisé (HTTPS ou localhost) ; en HTTP,
+  `Commun.copierTexte` sélectionne le texte dans une zone visible puis tente `document.execCommand('copy')` ; à défaut
+  le texte reste sélectionné (Ctrl+C). Vérifié en HTTP sur une adresse IP du réseau local (copie réussie par le repli).
+- **Plan** : `GET /api/plan` → `{image: '/plan/image?v=<maj>' | null, positions}` ; `GET /plan/image` relit le fichier,
+  **revérifie le type sur les premiers octets** (sinon 404) et l'envoie avec `Content-Type` exact, `nosniff`,
+  `Content-Disposition: inline`, `Content-Security-Policy: default-src 'none'; sandbox`, `Cache-Control: no-cache`.
+  Dépôt : JSON `{type, donnees}` (base64, préfixe `data:` accepté) ; le corps n'est lu (limite ≈ 4 Mo) **qu'après**
+  l'authentification (le lecteur JSON général de 20 ko est sauté pour cette seule adresse) ; types acceptés : PNG,
+  JPEG, WebP, reconnus à leur signature ; type déclaré différent du contenu → 400 ; > 3 Mo → 413. Pas de SVG (script
+  possible). Repères positionnés en CSSOM (`element.style.left`), compatible avec la CSP (`style-src 'self'`).
+  Numérotation : lieux connus des établissements affichés (après filtres), du plus proche au plus loin.
+- **Thème sombre** : `@media (prefers-color-scheme: dark)` redéfinit toutes les variables de couleur ; les paires
+  texte / fond principales des deux thèmes sont vérifiées au niveau AA par `test/accessibilite.test.js` (4,5 pour le
+  texte, 3 pour les contours de champ et les étoiles). Chart.js lit `--texte-2` et `--bordure`.
+- **Barre des jours collante** (page d'accueil : l'en-tête n'y est plus collant), lien d'évitement, tableau de la vue
+  semaine avec `caption`, `scope` et textes masqués « absent / présent » pour les lecteurs d'écran.
+
 ## 4. Mesure d'audience et statistiques
 
 - **Cookie** `ft_v` : 16 octets aléatoires (base64url), posé sur la première réponse non statique si absent ou
@@ -139,7 +177,12 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
   `TYPES_PUBLICS`, dont `recherche_vide` depuis la 3.3.0 : recherche sans résultat parmi les établissements du jour
   affiché, texte tronqué à 30 caractères) ; types réservés au serveur → 403, inconnus → 400 ; corps ≤ 2 ko (413
   au-delà) ; cible tronquée à 80 caractères. Évènements envoyés par un robot (même liste de motifs) : `204` sans
-  écriture. `POST /api/log` (anciennes pages en cache) : libellés convertis en évènements typés ; ceux commençant par
+  écriture. Depuis la 3.4.0 : `vue_semaine`, `marque_essaye`, `marque_a_tester`, `marque_retiree`,
+  `hasard_non_essaye`, `copie_teams`, `lien_ouvert` (cible `fiche`, `filtres` ou `jour`), `preferences`,
+  `carnet_ajout`, `carnet_retrait`, `carnet_ouvert`, `carnet_efface`, `plan_ouvert`, `plan_lieu_clic`,
+  `donnees_locales_effacees` ; côté serveur `admin_plan`. Ils alimentent « Fonctionnalités utilisées » (`FONCTIONNALITES`
+  de `statistiques.js` : semaine, essais, teams, lien, preferences, carnet, plan ; `hasard` inclut `hasard_non_essaye`)
+  sans changement du format des agrégats. `POST /api/log` (anciennes pages en cache) : libellés convertis en évènements typés ; ceux commençant par
   « Admin » ou « Ajout de » → 403.
 - **Navigateur de l'administrateur** : à la première requête authentifiée d'un navigateur qui a déjà un cookie,
   l'évènement serveur `admin_vu` est écrit (une fois par démarrage et par navigateur). Toute empreinte qui produit un
@@ -221,6 +264,8 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
 | GET | `/api/doublons?nom=&lieu=&emplacement=&sauf=` | `[{id, nom, categorie, jours, lieu, raisons[]}]` |
 | GET | `/api/quoi-de-neuf` | 30 derniers `{ts, type: ajout|modification|restauration|avis|fermeture, cible, nom, pseudo, detail?, note?, date?}` |
 | GET | `/api/lieux` | lieux |
+| GET | `/api/plan` | `{image: adresse \| null, positions: {idLieu: {x, y}}}` |
+| GET | `/plan/image` | image du plan (type exact, `nosniff`, CSP `sandbox`) ; `404` sans plan |
 | POST | `/api/etablissements` | champs de la fiche + `pseudo` → `201 {message, etablissement, doublons}` |
 | PUT | `/api/etablissements/:id` | `{version, etablissement, pseudo}` → `200`, `403` (délai de grâce), `409 {actuelle, differences}` |
 | DELETE | `/api/etablissements/:id` | `{version}` → archivage par l'auteur pendant le délai de grâce (`403` sinon) |
@@ -255,7 +300,9 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
 | DELETE | `/api/admin/foodtrucks/:id` | `{version}` → suppression définitive de la fiche et de ses contributions |
 | GET | `/api/admin/export/foodtrucks.csv`, `/api/admin/export/lieux.csv` | téléchargement |
 | GET / POST | `/api/admin/lieux` | liste (avec `utilisations`) / ajout `{nom, description, minutes_a_pied, maps}` |
-| PUT / DELETE | `/api/admin/lieux/:id` | modification / suppression (`409` si le lieu est utilisé) |
+| PUT / DELETE | `/api/admin/lieux/:id` | modification / suppression (`409` si le lieu est utilisé) ; la suppression retire aussi le lieu du plan |
+| PUT / DELETE | `/api/admin/plan/image` | `{type, donnees}` (base64, PNG / JPEG / WebP, ≤ 3 Mo) → `201 {message, plan}`, `400`, `413` / retrait de l'image (positions gardées) |
+| PUT / DELETE | `/api/admin/plan/positions/:lieu` | `{x, y}` (0 à 100) → `{message, plan}`, `400`, `404` (lieu inconnu) / retrait du lieu du plan |
 | GET | `/api/admin/statistiques?debut=AAAA-MM-JJ&fin=AAAA-MM-JJ` | `{periode (precedente, debutNavigateurs, traiteJusqua…), tuiles, precedente, totaux, jours[], semaines[], mois[], cohortes[], carteChaleur, entonnoir, fonctionnalites, recherchesVides[], etablissements[], contributeurs, versions[], pages, heures, navigateurs, evenements, joursConsultes, consultations, technique, noms}` — aucun identifiant de navigateur ni jeton d'auteur |
 | GET | `/api/admin/export/statistiques.csv?niveau=jours|semaines|etablissements&debut=&fin=` | agrégats de la période en CSV (valeurs neutralisées), sans identifiant |
 
@@ -284,7 +331,7 @@ Les variables déjà définies dans l'environnement priment sur le `.env`.
 - **En-têtes** : `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'
   data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`,
   `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`. Aucune balise `style`,
-  attribut `style=` ou script en ligne dans les pages (test dédié).
+  attribut `style=` ou script en ligne dans les pages (test dédié). Image du plan : voir §4 ter.
 - **Saisies** : validation serveur, listes fermées, longueurs maximales, refus de `= + - @` en tête du nom, de la
   cuisine et des horaires ; textes des avis et signalements en texte brut sur une ligne (caractères de contrôle
   retirés) ; échappement HTML de toutes les données affichées (`Commun.html`, jamais de HTML interprété) ; liens
@@ -301,7 +348,7 @@ Les variables déjà définies dans l'environnement priment sur le `.env`.
 
 ## 8. Tests
 
-`npm test` (node:test, aucune dépendance) : 70 tests.
+`npm test` (node:test, aucune dépendance) : 93 tests.
 
 - `test/unitaires.test.js` : CSV (virgules, guillemets, BOM, colonnes par nom, anciens formats), validation (nouveaux
   champs, listes fermées, lieu ou Maps, formules), catégories, TRUST_PROXY, limites de fréquence, réessais du
@@ -335,8 +382,22 @@ Les variables déjà définies dans l'environnement priment sur le `.env`.
   contributeurs et retour à 14 jours ; API : **robots et navigateur de l'administrateur exclus**, **aucune empreinte,
   aucun jeton d'auteur ni cookie dans la réponse ni dans les trois exports CSV**, `stats-etat.json` non servi.
 
+- `test/logique.test.js` (3.4.0) : filtres (cuisine, type, prix, régime, paiement, « Déjà essayé ? »), recherche,
+  « Au hasard » avec exclusions (déjà essayé, tirage précédent, candidat unique, répartition), liens partageables
+  (construction, lecture, aller-retour, valeurs inconnues ou dangereuses), texte « Copier pour Teams », carnet,
+  marques et alias de fusion, préférences, numérotation du plan.
+- `test/plan.test.js` (3.4.0) : détection du type (PNG, JPEG, WebP ; SVG, HTML, GIF refusés), routes protégées (y
+  compris variantes de casse / d'encodage, gros corps sans mot de passe refusé avant lecture), types et taille
+  limités, 415 / 400 / 403 (autre origine), image servie non exécutable, fichier remplacé à la main par du HTML → 404,
+  positions (bornes, lieu inconnu, retrait, suppression du lieu), sauvegarde quotidienne de l'image, nouveaux
+  évènements acceptés et comptés.
+- `test/accessibilite.test.js` (3.4.0) : contrastes AA des couleurs principales (thèmes clair et sombre), thème sombre
+  complet, langue, lien d'évitement et étiquettes des champs de la page d'accueil.
+
 Les pages ont été vérifiées dans un navigateur (poste de travail) sur un dossier de données temporaire ; en 3.3.0, le
-tableau de bord l'a été avec un jeu de démonstration de 4 mois (journaux d'avant et d'après la 3.1.0, contributions).
+tableau de bord l'a été avec un jeu de démonstration de 4 mois (journaux d'avant et d'après la 3.1.0, contributions) ;
+en 3.4.0, la page d'accueil (jour, semaine, plan, préférences, fiche, carnet, liens), l'administration du plan et la
+page de confidentialité l'ont été en thème clair et en thème sombre.
 
 ## 9. Exploitation
 

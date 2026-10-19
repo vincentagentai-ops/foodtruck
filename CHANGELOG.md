@@ -2,6 +2,48 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions numérotées MAJEUR.MINEUR.CORRECTIF.
 
+## [3.4.0] — 2026-10-19
+
+Phase 4 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md` §3.2) : améliorations de confort. Tout ce qui est personnel
+reste dans le navigateur ; rien de nominatif côté serveur.
+
+### Ajouté
+- **Vue semaine** (U5) : bouton « Semaine », grille Lundi–Vendredi × établissements avec le lieu de chaque jour et les
+  fermetures signalées ; favoris en tête et en surbrillance ; filtres et recherche appliqués ; clic sur un jour → détail.
+- **« Déjà essayé » / « À tester »** (U8) : marques dans la fiche, badges sur la liste, filtre « Déjà essayé ? »
+  (pas encore essayé, à tester, déjà essayés) ; **« Au hasard »** avec l'option « que je n'ai pas essayé », sans
+  retomber deux fois de suite sur le même, et ouverture de la fiche tirée.
+- **Liens partageables** (U10) : jour, vue semaine, recherche, filtres, classement et fiche ouverte dans l'adresse ;
+  un lien reçu s'applique sans écraser les filtres mémorisés. **« Copier pour Teams »** dans la fiche : « Midi : X
+  (cuisine, prix), lieu, confirmé à HHhMM — on y va ? » + lien de la fiche ; repli par sélection du texte (et ancienne
+  commande de copie) puisque le site est en HTTP.
+- **Confort d'affichage** (U12) : barre des jours collante, **thème sombre** suivant le réglage du système, lien
+  « Aller à la liste », contrastes des couleurs principales au niveau AA (clair et sombre, vérifiés par test),
+  graphiques des statistiques lisibles en thème sombre.
+- **Mes préférences** (U13) : filtres par défaut appliqués à chaque ouverture, « Revenir à mes préférences »,
+  particularités à privilégier (classées en premier dans chaque lieu, étiquette mise en avant).
+- **Mon carnet** (U14) : « J'y ai mangé aujourd'hui » dans la fiche, liste datée, nombre d'adresses testées, retrait
+  d'une ligne, « Tout effacer ».
+- **Plan local des emplacements** (U15) : l'administrateur dépose une image du quartier (PNG, JPEG ou WebP, 3 Mo au
+  plus, enregistrée dans `data/` et sauvegardée chaque jour) et place chaque lieu par un clic (ou au clavier) ; la page
+  d'accueil affiche le plan dépliable avec les lieux du jour numérotés (mêmes numéros que la liste). Le lien Maps reste.
+- **Statistiques** : nouveaux évènements typés (vue semaine, marques, hasard « pas essayé », copie Teams, arrivée par
+  un lien, préférences, carnet, plan) et lignes correspondantes dans « Fonctionnalités utilisées ».
+- **Données et confidentialité** : liste de ce qui est gardé dans le navigateur (clés du stockage local) et bouton
+  « Effacer les données du site dans ce navigateur ».
+
+### Sécurité
+- Image du plan : type reconnu à ses premiers octets (jamais SVG ni HTML), revérifié à chaque envoi ; servie avec son
+  type exact, `nosniff` et une CSP `sandbox` ; dépôt réservé à l'administrateur, corps lu seulement après
+  l'authentification ; écritures toujours en JSON et depuis les pages du site.
+
+### Modifié
+- Page d'accueil : l'en-tête n'est plus collant (c'est la barre des jours qui l'est) ; couleurs centralisées en
+  variables ; `--succes`, `--attention` et le gris secondaire assombris pour le contraste.
+- Sauvegarde quotidienne : copie aussi l'image du plan (`.png`, `.jpg`, `.webp`).
+- `npm test` : 93 tests (nouveaux fichiers `test/logique.test.js`, `test/plan.test.js`, `test/accessibilite.test.js`) ;
+  la logique de la page d'accueil est dans `public/js/logique.js`, partagée entre le navigateur et les tests.
+
 ## [3.3.0] — 2026-10-19
 
 Phase 3 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md` §6.4) : tableau de bord des statistiques, lisible en

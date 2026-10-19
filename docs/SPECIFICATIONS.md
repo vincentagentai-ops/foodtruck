@@ -1,4 +1,4 @@
-# Spécifications fonctionnelles — Food Trucks (v3.3.0)
+# Spécifications fonctionnelles — Food Trucks (v3.4.0)
 
 ## 1. Objectif
 
@@ -79,7 +79,8 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
   casse ignorés ; tous les mots doivent être trouvés.
 - **F6 – Filtres** : catégorie, prix maximum (8, 10, 12, 15 € ; prix inconnus exclus), type, régime (étiquette),
   moyen de paiement ; combinables ; mémorisés dans le navigateur avec le classement ; « Effacer les filtres ».
-- **F7 – Au hasard** : tire un établissement parmi les résultats affichés et le met en évidence.
+- **F7 – Au hasard** : tire un établissement parmi les résultats affichés, le met en évidence et ouvre sa fiche ;
+  option « que je n'ai pas essayé » (U8) ; pas deux fois de suite le même, sauf s'il est seul.
 - **F8 – Favoris** : étoile sur chaque fiche ; liste d'identifiants dans le stockage local du navigateur ; bandeau
   « Vos favoris présents aujourd'hui / le <jour> ».
 - **F9 – Nouveautés** : badge « Nouveau » pendant 15 jours après `cree_le` ; encadré « Nouveaux cette semaine » (7 jours).
@@ -111,6 +112,22 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
 - **F20 – Données et confidentialité** : page d'information (données, finalités, durées, accès, contact,
   contributions et nom déclaré), liée en pied de page.
 
+- **F21 – Vue semaine (U5)** : bouton « Semaine » ; grille Lundi–Vendredi × établissements filtrés, lieu de chaque jour,
+  « Fermé » si une fermeture est signalée ; favoris en tête et en surbrillance ; clic sur un jour → détail du jour.
+- **F22 – Déjà essayé / À tester (U8)** : marques dans le stockage local ; badges sur la liste ; filtre « Déjà essayé ? »
+  (pas encore essayé, à tester, déjà essayés).
+- **F23 – Partage (U10)** : jour, vue, recherche, filtres, classement et fiche ouverte dans l'adresse (lien
+  partageable) ; « Copier pour Teams » dans la fiche : « Midi : X (cuisine, prix), lieu, confirmé à HHhMM — on y va ? »
+  + lien de la fiche, avec repli par sélection du texte (site en HTTP).
+- **F24 – Confort d'affichage (U12)** : barre des jours collante, thème sombre suivant le système, lien d'évitement,
+  navigation au clavier, contrastes AA des couleurs principales (vérifiés par test).
+- **F25 – Préférences (U13)** : filtres par défaut appliqués à chaque ouverture, particularités privilégiées (classées
+  en premier dans chaque lieu) ; stockage local.
+- **F26 – Carnet (U14)** : « J'y ai mangé aujourd'hui » dans la fiche ; liste datée, nombre d'adresses testées,
+  retrait d'une ligne, « Tout effacer » ; stockage local.
+- **F27 – Plan local (U15)** : image du quartier déposée par l'administrateur, lieux du jour numérotés (même numéro que
+  dans la liste), clic → lieu dans la liste ; sans Internet ; le lien Maps reste disponible.
+
 ### Effets automatiques (seuils réglables)
 
 | Règle | Défaut |
@@ -133,6 +150,8 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
   suppression définitive avec toutes les contributions liées (l'archivage passe par le statut). Remettre une fiche
   « actif » clôt ses signalements « n'est plus présent ».
 - **A4 – Lieux** : ajout, modification en ligne, suppression si inutilisé ; nombre d'établissements par lieu.
+- **A10 – Plan des emplacements (U15)** : dépôt d'une image PNG / JPEG / WebP (3 Mo au plus) enregistrée dans `data/`,
+  placement de chaque lieu par un clic (ou au clavier), retrait d'un lieu ou de l'image.
 - **A5 – Sauvegarde** : téléchargement de `foodtrucks.csv`, `lieux.csv` et `avis.csv` (textes neutralisés pour Excel) ;
   sauvegarde quotidienne automatique (tous les fichiers de `data/`).
 - **A6 – Statistiques** (`/admin/statistiques.html`, tableau de bord 3.3.0) : période (7 j, 30 j, trimestre,
@@ -157,7 +176,9 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
 - Évènements typés envoyés par les pages (liste blanche) : chargement, jour_clic, recherche, filtre, filtres_effaces,
   recherche_vide (3.3.0), tri, hasard, clic_site, clic_maps, favori_ajout, favori_retrait, nouveau_clic, suggestion_ouverte, suggestion_erreur,
   clic_mail, fiche_ouverte, historique_ouvert, ajout_ouvert, ajout_erreur, modification_ouverte, doublon_vu,
-  quoi_de_neuf_clic. Écrits par le serveur uniquement : page_vue, suggestion, admin_*, et les contributions (ajout,
+  quoi_de_neuf_clic ; depuis la 3.4.0 : vue_semaine, marque_essaye, marque_a_tester, marque_retiree, hasard_non_essaye,
+  copie_teams, lien_ouvert, preferences, carnet_ajout, carnet_retrait, carnet_ouvert, carnet_efface, plan_ouvert,
+  plan_lieu_clic, donnees_locales_effacees (l'usage seulement, jamais le contenu des données personnelles). Écrits par le serveur uniquement : page_vue, suggestion, admin_*, et les contributions (ajout,
   modification, restauration, retrait, avis, avis_modifie, avis_supprime, presence, signalement, avis_masque_auto,
   statut_auto) — celles-ci **sans identifiant de navigateur**, pour qu'elles ne puissent pas être reliées à l'audience.
 - Exclusions : administration, API, statuts ≥ 400 et redirections, robots (pages et évènements), requêtes autres que
@@ -166,7 +187,9 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
 
 ## 7. Hors périmètre de cette version (feuille de route)
 
-- Phase 4 : vue semaine, « déjà essayé », partage, thème sombre, plan local des emplacements.
+- Reportés : classements (C8), bons plans (C10), « On y va ? » (C11), agrégats pré-calculés (T14).
+- Écartés : géolocalisation (U16), HTTPS (T11), SSO et autres identifications vérifiées (I2 à I4), comptes
+  administrateurs multiples (T13).
 
 ## 8. Exigences non fonctionnelles
 

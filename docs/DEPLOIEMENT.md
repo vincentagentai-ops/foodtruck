@@ -118,6 +118,24 @@ depuis `sauvegardes\avant-mise-a-jour-<date>\` et supprimer `data\stats-etat.jso
 
 ---
 
+## B quater. Passage de la 3.3.0 à la 3.4.0 (confort)
+
+Aucune migration de données, aucun réglage nouveau dans `.env`.
+
+1. **Mise à jour** : procédure A (la copie de `data\` faite par le script suffit comme sauvegarde).
+2. **Vérifications** dans `pm2 logs foodtruck --lines 50` : démarrage normal, aucune erreur.
+3. **Vérifier dans le navigateur, depuis un poste de collègue** : page d'accueil, bouton **Semaine**, une fiche
+   (bloc « Pour moi », **Copier pour Teams** puis collage dans Teams), **Mon carnet** en bas de page. Si Windows est
+   réglé en mode sombre, le site s'affiche en sombre.
+4. **Plan des emplacements** : dans `/admin/`, section « Plan des emplacements », déposer l'image du quartier et
+   placer les lieux (guide administrateur). Fichiers créés : `data\plan.json` et `data\plan-image.png` (ou `.jpg`,
+   `.webp`), sauvegardés chaque jour avec le reste.
+
+**Revenir à la 3.3.0** si nécessaire : réinstaller le zip 3.3.0 (procédure A). Les fichiers du plan restent dans
+`data\` sans gêner la 3.3.0 ; les données personnelles des collègues sont dans leurs navigateurs et ne sont pas touchées.
+
+---
+
 ## C. Première installation (serveur neuf)
 
 1. Extraire le zip dans `C:\SITES\FoodTrucksNodejs`.
