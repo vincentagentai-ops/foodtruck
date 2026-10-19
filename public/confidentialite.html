@@ -25,7 +25,8 @@
                 <li>Un cookie anonyme sert uniquement à <strong>compter les navigateurs</strong> qui utilisent le site
                     (statistiques globales). Il ne contient aucune information sur vous.</li>
                 <li><strong>Aucune statistique nominative</strong> : personne ne peut savoir, avec ce site, qui a consulté quoi.</li>
-                <li>Vos favoris et vos filtres restent <strong>dans votre navigateur</strong> ; ils ne sont pas envoyés au serveur.</li>
+                <li>Vos favoris, filtres, préférences, marques « Déjà essayé » / « À tester » et votre carnet restent
+                    <strong>dans votre navigateur</strong> ; ils ne sont pas envoyés au serveur (<a href="#navigateur">détail et effacement</a>).</li>
             </ul>
         </section>
 
@@ -40,7 +41,8 @@
                         <td>13 mois, non prolongé (un nouvel identifiant est tiré ensuite)</td>
                     </tr>
                     <tr>
-                        <td>Évènements d'utilisation : pages vues, jour choisi, recherches, filtres, clics sur « Site » ou « Plan », favoris, « Au hasard »</td>
+                        <td>Évènements d'utilisation : pages vues, jour choisi, recherches, filtres, clics sur « Site » ou « Plan », favoris, « Au hasard »,
+                            vue semaine, « Copier pour Teams », marques et carnet (le fait d'utiliser la fonction, pas le contenu de votre carnet)</td>
                         <td>Savoir quelles fonctions servent et améliorer le site. Ils sont rattachés à une empreinte chiffrée du cookie
                             (jamais au cookie lui-même), <strong>sans adresse IP</strong></td>
                         <td>13 mois, puis suppression automatique</td>
@@ -78,13 +80,46 @@
                         <td>13 mois, puis suppression automatique (seuls des totaux par jour sont gardés)</td>
                     </tr>
                     <tr>
-                        <td>Dans votre navigateur seulement : favoris et filtres (stockage local)</td>
+                        <td>Dans votre navigateur seulement : favoris, filtres, préférences, marques, carnet, nom déclaré
+                            (stockage local, <a href="#navigateur">voir ci-dessous</a>)</td>
                         <td>Vous retrouver vos préférences</td>
-                        <td>Jusqu'à ce que vous effaciez les données du site dans votre navigateur</td>
+                        <td>Jusqu'à ce que vous les effaciez (bouton ci-dessous ou réglages du navigateur)</td>
                     </tr>
                 </tbody>
             </table>
             <p class="aide-tableau">Les données du serveur sont copiées chaque jour dans une sauvegarde conservée 30 jours.</p>
+        </section>
+
+        <section class="carte" id="navigateur" aria-labelledby="titreNavigateur">
+            <h2 id="titreNavigateur">Ce qui est gardé dans votre navigateur</h2>
+            <p>Ces informations sont enregistrées <strong>dans le stockage local de votre navigateur</strong>, sur ce poste
+                uniquement : elles ne sont <strong>jamais envoyées au serveur</strong>, l'administrateur ne peut pas les voir, et
+                elles ne vous suivent pas sur un autre poste ou un autre navigateur.</p>
+            <table class="tableau">
+                <thead><tr><th>Information</th><th>Clé du stockage local</th></tr></thead>
+                <tbody>
+                    <tr><td>Favoris (étoile ☆)</td><td><code>ft_favoris</code></td></tr>
+                    <tr><td>Derniers filtres et classement utilisés</td><td><code>ft_filtres</code></td></tr>
+                    <tr><td>Préférences : filtres par défaut et particularités à privilégier</td><td><code>ft_preferences</code></td></tr>
+                    <tr><td>Marques « Déjà essayé » / « À tester »</td><td><code>ft_marques</code></td></tr>
+                    <tr><td>Carnet « J'y ai mangé » : établissement et date de chaque repas noté</td><td><code>ft_carnet</code></td></tr>
+                    <tr><td>Nom déclaré (proposé dans les formulaires)</td><td><code>ft_pseudo</code></td></tr>
+                    <tr><td>Réglages d'affichage : option « que je n'ai pas essayé » du bouton « Au hasard », plan déplié ou non</td>
+                        <td><code>ft_hasard_non_essaye</code>, <code>ft_plan_ouvert</code></td></tr>
+                </tbody>
+            </table>
+            <p class="aide-tableau">Le site sait seulement qu'une de ces fonctions a été utilisée (statistiques anonymes ci-dessus),
+                jamais ce que contiennent vos favoris, vos marques ou votre carnet.</p>
+            <h3>Les effacer</h3>
+            <ul>
+                <li>Le carnet et les marques : bouton « Tout effacer » de « Mon carnet », en bas de la page d'accueil.</li>
+                <li>Tout d'un coup, sur ce navigateur :
+                    <button type="button" class="bouton danger petit" id="effacerDonneesLocales">Effacer les données du site dans ce navigateur</button>
+                    <span id="etatEffacement" role="status"></span></li>
+                <li>Ou depuis les réglages du navigateur (Edge, Chrome : « Cookies et données de site » ; Firefox : « Cookies et données
+                    de sites ») : cela efface aussi le cookie de mesure d'audience.</li>
+            </ul>
+            <p class="aide-petite">Vos contributions publiées (avis, ajouts…) ne sont pas concernées : elles sont sur le serveur.</p>
         </section>
 
         <section class="carte">
@@ -104,7 +139,7 @@
             <ul>
                 <li>Refuser la mesure d'audience : bloquez ou supprimez les cookies de ce site dans votre navigateur
                     (le site fonctionne de la même façon).</li>
-                <li>Effacer vos favoris, filtres et nom déclaré : supprimez les données de ce site dans les réglages de votre navigateur.</li>
+                <li>Effacer vos favoris, filtres, préférences, marques, carnet et nom déclaré : <a href="#navigateur">voir ci-dessus</a>.</li>
                 <li>Modifier ou supprimer votre avis : depuis la fiche de l'établissement, avec le même navigateur. Si vous avez
                     changé de navigateur, demandez à l'administrateur.</li>
                 <li>Contribuer sans cookie n'est pas possible : le cookie est ce qui garantit « un avis par navigateur ».</li>
@@ -119,6 +154,8 @@
     </footer>
 
     <script src="/js/commun.js"></script>
+    <script src="/js/logique.js"></script>
+    <script src="/js/perso.js"></script>
     <script src="/js/confidentialite.js"></script>
 </body>
 </html>

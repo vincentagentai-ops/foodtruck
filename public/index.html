@@ -7,7 +7,8 @@
     <link rel="icon" href="/img/logo.png" type="image/png">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
+<body class="accueil">
+    <a class="aller-contenu" href="#titreResultat">Aller à la liste des établissements</a>
     <header class="entete">
         <img src="/img/logo.png" alt="" class="logo">
         <h1>Qu'est-ce que je veux manger aujourd'hui ?</h1>
@@ -15,7 +16,7 @@
 
     <main class="contenu">
         <nav class="jours" id="jours" aria-label="Choisir le jour">
-            <!-- Boutons Lundi à Vendredi générés par accueil.js -->
+            <!-- Boutons Lundi à Vendredi et « Semaine » générés par accueil.js -->
         </nav>
         <p class="info-jour" id="infoJour" hidden></p>
 
@@ -60,6 +61,15 @@
                         <select id="filtrePaiement" data-filtre="paiement"><option value="">Indifférent</option></select>
                     </div>
                     <div class="champ">
+                        <label for="filtreEssai">Déjà essayé ?</label>
+                        <select id="filtreEssai" data-filtre="essai">
+                            <option value="">Indifférent</option>
+                            <option value="pas_essaye">Pas encore essayé</option>
+                            <option value="a_tester">Marqués « À tester »</option>
+                            <option value="essaye">Déjà essayés</option>
+                        </select>
+                    </div>
+                    <div class="champ">
                         <label for="tri">Classer</label>
                         <select id="tri">
                             <option value="lieu">Par lieu</option>
@@ -69,9 +79,24 @@
                     </div>
                 </div>
             </details>
+            <details class="plus-filtres" id="mesPreferences">
+                <summary>Mes préférences</summary>
+                <p class="aide-petite" id="resumePreferences"></p>
+                <div class="ligne-boutons ligne-serree">
+                    <button type="button" class="bouton secondaire petit" id="enregistrerPreferences">Utiliser les filtres actuels par défaut</button>
+                    <button type="button" class="bouton secondaire petit" id="oublierPreferences" hidden>Ne plus filtrer par défaut</button>
+                </div>
+                <fieldset class="champ espace-haut">
+                    <legend>Particularités à privilégier <small>(affichées en premier dans chaque lieu)</small></legend>
+                    <div class="cases-jours" id="casesPrivilegier"></div>
+                </fieldset>
+                <p class="aide-petite">Gardé dans ce navigateur uniquement.</p>
+            </details>
             <div class="ligne-boutons">
                 <button type="button" class="bouton" id="boutonHasard">🎲 Au hasard</button>
+                <label class="case"><input type="checkbox" id="hasardNonEssaye"> que je n'ai pas essayé</label>
                 <button type="button" class="bouton secondaire" id="effacerFiltres" hidden>Effacer les filtres</button>
+                <button type="button" class="bouton secondaire" id="appliquerPreferences" hidden>Revenir à mes préférences</button>
                 <span class="aide-filtres" id="etatFiltres" aria-live="polite"></span>
             </div>
         </section>
@@ -83,8 +108,19 @@
             <ul id="listeNouveautes"></ul>
         </aside>
 
+        <details class="carte plan" id="plan" hidden>
+            <summary>Plan des emplacements <small id="resumePlan"></small></summary>
+            <div class="plan-conteneur">
+                <div class="plan-cadre" id="planCadre">
+                    <img id="planImage" alt="Plan du quartier avec les lieux du jour numérotés">
+                </div>
+                <ol class="legende-plan" id="legendePlan"></ol>
+            </div>
+            <p class="aide-petite">Plan servi par le site (sans Internet). Les liens Google Maps des fiches restent disponibles.</p>
+        </details>
+
         <section class="carte" aria-live="polite">
-            <h2 id="titreResultat">Chargement…</h2>
+            <h2 id="titreResultat" tabindex="-1">Chargement…</h2>
             <div id="liste"></div>
         </section>
 
@@ -96,8 +132,17 @@
                 Une question, un problème ?
                 <a id="lienMail" href="#">Écrire à l'administrateur</a>
             </p>
-            <p class="aide-favoris">Les favoris (☆), les filtres et votre nom déclaré sont gardés dans ce navigateur uniquement.</p>
+            <p class="aide-favoris">Les favoris (☆), les filtres, vos préférences, vos marques « essayé / à tester », votre carnet et
+                votre nom déclaré sont gardés dans ce navigateur uniquement (<a href="/confidentialite.html#navigateur">les effacer</a>).</p>
         </section>
+
+        <details class="carte carnet" id="carnet">
+            <summary>Mon carnet <small id="resumeCarnet"></small></summary>
+            <p class="aide-petite">Cochez « J'y ai mangé aujourd'hui » dans la fiche d'un établissement. Gardé dans ce navigateur uniquement.</p>
+            <ul class="fil" id="listeCarnet"></ul>
+            <p class="ligne-boutons"><button type="button" class="bouton danger petit" id="effacerCarnet">Tout effacer</button>
+                <span class="aide-petite">Efface le carnet et les marques « Déjà essayé » / « À tester ».</span></p>
+        </details>
 
         <section class="carte quoi-de-neuf" aria-labelledby="titreQuoiDeNeuf">
             <h2 id="titreQuoiDeNeuf">Quoi de neuf ?</h2>
@@ -207,6 +252,8 @@
     </dialog>
 
     <script src="/js/commun.js"></script>
+    <script src="/js/logique.js"></script>
+    <script src="/js/perso.js"></script>
     <script src="/js/formulaires.js"></script>
     <script src="/js/fiche.js"></script>
     <script src="/js/accueil.js"></script>

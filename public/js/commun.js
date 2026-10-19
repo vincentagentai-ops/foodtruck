@@ -153,6 +153,7 @@ const Commun = (() => {
             const z = document.createElement('div');
             z.id = 'notifications';
             z.setAttribute('role', 'status');
+            z.setAttribute('aria-live', 'polite');
             document.body.appendChild(z);
             return z;
         })();
@@ -163,9 +164,36 @@ const Commun = (() => {
         setTimeout(() => n.remove(), 4500);
     }
 
+    /**
+     * Copie `texte` dans le presse-papiers. L'API presse-papiers n'existe qu'en HTTPS : en HTTP, le texte est mis
+     * dans `zone` (textarea visible), sélectionné, puis copié par l'ancienne commande « copy » si le navigateur
+     * l'accepte. Retourne true si la copie a réussi ; sinon le texte reste sélectionné (Ctrl+C).
+     */
+    async function copierTexte(texte, zone) {
+        if (zone) {
+            zone.value = texte;
+            zone.hidden = false;
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(texte);
+                return true;
+            } catch { /* refusé : repli ci-dessous */ }
+        }
+        if (!zone) return false;
+        zone.focus();
+        zone.select();
+        try {
+            return document.execCommand('copy');
+        } catch {
+            return false;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', decorerPage);
 
     return {
+        copierTexte,
         html, urlSure, formaterPrix, prixMin, simplifier, evenement, lireLocal, ecrireLocal, api, config, notifier,
         pseudo, memoriserPseudo, signature, dateISO, dateCourte, tempsRelatif, etoiles, nombre, ouvrirModale, fermerModale,
     };

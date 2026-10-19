@@ -272,6 +272,7 @@
             ligneVide(tbody, `Chargement impossible : ${err.message}`, 6);
             return;
         }
+        document.dispatchEvent(new CustomEvent('lieux-charges', { detail: lieux })); // plan.js
         document.getElementById('nbLieux').textContent = `(${lieux.length})`;
         const select = document.getElementById('f-lieu');
         const valeur = select.value;

@@ -180,8 +180,14 @@
         },
     };
 
+    /** Couleur d'une variable CSS (thème clair ou sombre). */
+    const couleurCss = (nom, defaut) => getComputedStyle(document.documentElement).getPropertyValue(nom).trim() || defaut;
+
     function graphique(id, type, libelles, jeux, options = {}) {
         if (typeof Chart === 'undefined') return;
+        // Textes et quadrillage lisibles dans les deux thèmes
+        Chart.defaults.color = couleurCss('--texte-2', '#5b6779');
+        Chart.defaults.borderColor = couleurCss('--bordure', '#e2e8f0');
         const data = { labels: libelles, datasets: jeux };
         if (graphiques[id]) {
             graphiques[id].data = data;
@@ -356,7 +362,7 @@
         const jeux = types.map(t => ({ type: 'bar', label: LIBELLES_CONTRIBUTIONS[t], data: semaines.map(s => s.contributions[t] || 0),
             backgroundColor: COULEURS_CONTRIBUTIONS[t], stack: 'types' }));
         jeux.push({ type: 'line', label: 'Contributeurs distincts', data: semaines.map(s => stats.contributeurs.parSemaine[s.semaine] || 0),
-            borderColor: '#1e293b', backgroundColor: '#1e293b', tension: 0.2, stack: 'contributeurs' });
+            borderColor: couleurCss('--texte', '#1e293b'), backgroundColor: couleurCss('--texte', '#1e293b'), tension: 0.2, stack: 'contributeurs' });
         graphique('gContributions', 'bar', semaines.map(s => formaterDate(s.debut, true)), jeux, { empile: true });
 
         const c = stats.contributeurs;

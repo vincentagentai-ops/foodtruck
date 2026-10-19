@@ -181,6 +181,36 @@
             </div>
             <p><a class="lien-discret" href="/api/admin/export/lieux.csv">Télécharger lieux.csv</a></p>
         </section>
+
+        <section class="carte" id="sectionPlan" aria-labelledby="titrePlan">
+            <h2 id="titrePlan">Plan des emplacements</h2>
+            <p class="aide">Une image du quartier (capture d'écran d'un plan, photo d'un plan dessiné…) affichée sur la page
+                d'accueil avec les lieux du jour numérotés, sans Internet. Formats PNG, JPEG ou WebP, 3 Mo au plus.
+                Elle est enregistrée dans <code>data/</code> et sauvegardée chaque jour avec les données.</p>
+            <div class="barre-outils">
+                <div class="champ"><label for="fichierPlan">Image du plan</label>
+                    <input type="file" id="fichierPlan" accept="image/png,image/jpeg,image/webp"></div>
+                <button type="button" class="bouton" id="envoyerPlan" disabled>Enregistrer cette image</button>
+                <button type="button" class="bouton danger" id="retirerPlan" hidden>Retirer le plan</button>
+            </div>
+            <div id="zonePlacement" hidden>
+                <div class="barre-outils">
+                    <div class="champ"><label for="lieuAPlacer">Lieu à placer</label><select id="lieuAPlacer"></select></div>
+                    <p class="aide-petite">Choisissez un lieu puis cliquez sur le plan à son emplacement (ou placez-le au clavier :
+                        flèches pour déplacer le repère sélectionné, Entrée pour enregistrer).</p>
+                </div>
+                <div class="plan-conteneur">
+                    <div class="plan-cadre" id="planAdmin" tabindex="0" aria-describedby="aidePlanAdmin">
+                        <img id="imagePlanAdmin" alt="Plan des emplacements">
+                    </div>
+                    <div class="legende-plan">
+                        <p id="aidePlanAdmin" class="aide-petite">Lieux placés : le numéro est celui de la liste ci-dessous
+                            (sur la page d'accueil, les lieux sont numérotés chaque jour du plus proche au plus loin).</p>
+                        <ol id="listePlacements"></ol>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="pied">
@@ -189,7 +219,9 @@
     </footer>
 
     <script src="/js/commun.js"></script>
+    <script src="/js/logique.js"></script>
     <script src="/admin/admin.js"></script>
     <script src="/admin/surveillance.js"></script>
+    <script src="/admin/plan.js"></script>
 </body>
 </html>

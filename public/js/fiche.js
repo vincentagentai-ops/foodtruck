@@ -1,5 +1,6 @@
-// Fiche d'un établissement (fenêtre) : infos factuelles « modifiables par tous », présence du jour,
-// avis des collègues « opinions signées », historique avec restauration, signalements.
+// Fiche d'un établissement (fenêtre) : « Pour moi » (marques, carnet, « Copier pour Teams »), infos factuelles
+// « modifiables par tous », présence du jour, avis des collègues « opinions signées », historique avec restauration,
+// signalements.
 // Tous les textes saisis par les collègues sont affichés échappés (Commun.html) : jamais de HTML interprété.
 
 const Fiche = (() => {
@@ -10,6 +11,8 @@ const Fiche = (() => {
     let lieux = {};
     let donnees = null; // réponse de /api/etablissements/:id
     let apresChangement = () => {};
+    let surOuverture = () => {};
+    let surFermeture = () => {};
 
     const liste = valeur => String(valeur || '').split(';').map(v => v.trim()).filter(Boolean);
 
@@ -84,6 +87,45 @@ const Fiche = (() => {
                 <p><button type="submit" class="bouton petit">Envoyer le signalement</button></p>
             </form>
         </section>`;
+    }
+
+    /** Marques et carnet (gardés dans ce navigateur) et partage vers Teams. */
+    function blocPerso(ft) {
+        const marque = Perso.marques()[ft.id] || '';
+        const mange = Perso.mangeAujourdhui(ft.id);
+        const bouton = (attributs, presse, texte) => `<button type="button" class="bouton secondaire petit bascule" ${attributs} aria-pressed="${presse}">${texte}</button>`;
+        return `<section class="bloc-fiche bloc-perso" aria-labelledby="titrePerso">
+            <h3 id="titrePerso">Pour moi <small>gardé dans ce navigateur</small></h3>
+            <p class="ligne-boutons ligne-serree">
+                ${bouton('data-marque="essaye"', marque === 'essaye', '✓ Déjà essayé')}
+                ${bouton('data-marque="a_tester"', marque === 'a_tester', '☆ À tester')}
+                ${bouton('data-action="mange"', mange, "🍽 J'y ai mangé aujourd'hui")}
+                <button type="button" class="bouton petit" data-action="teams">Copier pour Teams</button>
+            </p>
+            <div class="sous-bloc" id="zoneTeams" hidden>
+                <label for="texteTeams">Texte à coller dans Teams</label>
+                <textarea id="texteTeams" rows="3" readonly></textarea>
+                <p class="aide-petite" id="aideTeams" role="status"></p>
+            </div>
+        </section>`;
+    }
+
+    async function copierPourTeams() {
+        const ft = donnees.etablissement;
+        const jour = Logique.jourDeLaSemaine(new Date());
+        const valeurLieu = jour && Logique.joursDe(ft).includes(jour) ? Logique.lieuDuJour(ft, jour) : ft.lieu;
+        const texte = Logique.texteTeams(ft, {
+            lieu: lieux[valeurLieu] ? lieux[valeurLieu].nom : '',
+            presence: donnees.resume.presence,
+            lien: `${location.origin}/${Logique.construireLien({ fiche: ft.id })}`,
+        });
+        const zone = document.getElementById('zoneTeams');
+        zone.hidden = false;
+        const ok = await Commun.copierTexte(texte, document.getElementById('texteTeams'));
+        document.getElementById('aideTeams').textContent = ok
+            ? 'Copié ! Collez-le dans Teams (Ctrl+V).'
+            : 'Le texte est sélectionné : appuyez sur Ctrl+C pour le copier, puis collez-le dans Teams.';
+        Commun.evenement('copie_teams', ft.id);
     }
 
     function blocPresence(r) {
@@ -163,7 +205,7 @@ const Fiche = (() => {
                 <h2 id="titreFiche">${h(ft.nom)} ${badges}</h2>
                 <button type="button" class="fermer" data-action="fermer" aria-label="Fermer la fiche">×</button>
             </div>
-            ${blocPresence(r)}${blocInfos(ft, r)}${blocAvis(r)}`;
+            ${blocPerso(ft)}${blocPresence(r)}${blocInfos(ft, r)}${blocAvis(r)}`;
     }
 
     async function charger(id) {
@@ -181,6 +223,7 @@ const Fiche = (() => {
         }
         Commun.ouvrirModale(modale);
         zone.querySelector('.fermer').focus();
+        surOuverture(donnees.etablissement.id);
     }
 
     /** Recharge la fiche et la liste après une contribution. */
@@ -236,6 +279,16 @@ const Fiche = (() => {
             return Formulaires.ouvrirModification(ft, () => { apresChangement(); ouvrir(ft.id); });
         }
         if (nom === 'historique') return afficherHistorique(cible);
+        if (nom === 'teams') return copierPourTeams();
+        if (nom === 'mange') {
+            const ajoute = Perso.basculerRepas(ft);
+            Commun.notifier(ajoute ? `Noté dans votre carnet : ${ft.nom}, aujourd'hui.` : 'Retiré de votre carnet.');
+            return rafraichirPerso();
+        }
+        if (cible.dataset.marque) {
+            Perso.basculerMarque(ft.id, cible.dataset.marque);
+            return rafraichirPerso();
+        }
         if (nom === 'signaler') {
             const form = document.getElementById('formSignalement');
             form.hidden = !form.hidden;
@@ -274,6 +327,16 @@ const Fiche = (() => {
             return action(() => Commun.api(url('/avis'), { method: 'DELETE', body: {} }));
         }
         return undefined;
+    }
+
+    /** Nouvel affichage du bloc « Pour moi » seulement (le reste de la fiche ne change pas). */
+    function rafraichirPerso() {
+        const bloc = zone.querySelector('.bloc-perso');
+        const focus = document.activeElement;
+        const cle = focus && (focus.dataset.marque || focus.dataset.action);
+        bloc.outerHTML = blocPerso(donnees.etablissement);
+        const nouveau = cle && zone.querySelector(`.bloc-perso [data-marque="${cle}"], .bloc-perso [data-action="${cle}"]`);
+        if (nouveau) nouveau.focus();
     }
 
     async function surEnvoi(e) {
@@ -315,6 +378,9 @@ const Fiche = (() => {
         modale = document.getElementById('modaleFiche');
         zone = document.getElementById('contenuFiche');
         apresChangement = options.apresChangement || (() => {});
+        surOuverture = options.surOuverture || (() => {});
+        surFermeture = options.surFermeture || (() => {});
+        modale.addEventListener('close', () => surFermeture());
         Commun.config().then(c => { config = c; });
         zone.addEventListener('click', surClic);
         zone.addEventListener('submit', surEnvoi);
