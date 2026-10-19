@@ -72,7 +72,7 @@ function charger(env = process.env) {
         dossierSauvegardes: env.BACKUP_DIR
             ? path.resolve(RACINE, env.BACKUP_DIR)
             : path.join(path.dirname(dossierDonnees), 'sauvegardes'),
-        joursSauvegarde: entier(env.BACKUP_DAYS, 30),
+        joursSauvegarde: Math.max(1, entier(env.BACKUP_DAYS, 30)),
         moisConservationJournaux: 13,
         secretStatistiques: env.STATS_SECRET || '', // vide = généré et enregistré dans data/secret-stats.json
         admin: {

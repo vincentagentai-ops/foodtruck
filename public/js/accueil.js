@@ -50,7 +50,7 @@
             bouton.textContent = jour;
             if (!aujourdhui.weekEnd && jour === aujourdhui.jour) {
                 bouton.classList.add('aujourdhui');
-                bouton.title = "Aujourd'hui";
+                bouton.setAttribute('aria-label', `${jour} (aujourd'hui)`);
             }
             bouton.addEventListener('click', () => choisirJour(jour, true));
             nav.appendChild(bouton);

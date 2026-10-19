@@ -1,7 +1,10 @@
 @echo off
 rem Premiere installation de Food Trucks sur le serveur Windows (a lancer depuis le dossier du site).
 cd /d "%~dp0.."
-call npm install --omit=dev || goto erreur
+rem Le zip de livraison contient node_modules : npm n'est utilise que s'il manque
+if not exist node_modules\express (
+    call npm install --omit=dev || goto erreur
+)
 if not exist .env (
     copy .env.example .env >nul
     echo Fichier .env cree : ouvrez-le pour regler PORT, ADMIN_PASSWORD, CONTACT_EMAIL et SMTP_HOST.
