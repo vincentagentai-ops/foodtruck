@@ -1,4 +1,4 @@
-# Spécifications fonctionnelles — Food Trucks (v3.2.0)
+# Spécifications fonctionnelles — Food Trucks (v3.3.0)
 
 ## 1. Objectif
 
@@ -135,10 +135,15 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
 - **A4 – Lieux** : ajout, modification en ligne, suppression si inutilisé ; nombre d'établissements par lieu.
 - **A5 – Sauvegarde** : téléchargement de `foodtrucks.csv`, `lieux.csv` et `avis.csv` (textes neutralisés pour Excel) ;
   sauvegarde quotidienne automatique (tous les fichiers de `data/`).
-- **A6 – Statistiques** (`/admin/statistiques.html`) : période (dates, 7 j, 30 j, tout) ; navigateurs actifs par jour /
-  semaine / mois (moyennes), nouveaux, pages vues, suggestions ; courbes par jour (avec l'ancien calcul par IP),
-  nouveaux / récurrents par semaine, jours consultés, activité par heure ; utilisation des fonctions, établissements
-  consultés (site / Maps) ; détails techniques ; limites de mesure.
+- **A6 – Statistiques** (`/admin/statistiques.html`, tableau de bord 3.3.0) : période (7 j, 30 j, trimestre,
+  personnalisée, tout) comparée à la période précédente ; tuiles navigateurs actifs par jour et par semaine (7 jours
+  glissants), nouveaux, retour à S+1, contributions et contributeurs distincts ; courbe des actifs avec marqueurs de
+  version et rupture de série 3.1.0 ; nouveaux / récurrents par semaine ; carte de chaleur heure × jour de semaine ;
+  entonnoir visite → fiche → Maps / site ; fonctionnalités en % des visites (visite = pause de plus de 30 min) ;
+  tableau par établissement (fiches, clics, présences confirmées, avis, note) ; contributions par type et par semaine,
+  retour des nouveaux contributeurs dans les 14 jours ; cohortes hebdomadaires ; recherches sans résultat ; exports CSV
+  sans identifiant (jour, semaine, établissement) ; détails techniques repliés ; encadré « Limites de mesure ».
+  Calcul quotidien incrémental : la page ne lit que les agrégats (plus la journée en cours).
 - **A7 – Conflits** : modification ou suppression refusée si la fiche a changé entre-temps (version) — « Rechargez la page ».
 - **A8 – Blocage** : suspension des contributions d'un jeton de navigateur pendant N jours (consultation possible).
 - **A9 – Fusion (C14)** : la fiche conservée reçoit les jours de l'autre (avec son lieu pour ces jours), l'union des
@@ -150,17 +155,17 @@ déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'es
 - Cookie `ft_v` : 128 bits aléatoires, `HttpOnly`, `SameSite=Lax`, 13 mois, posé une fois, jamais prolongé.
 - Journaux : HMAC de l'identifiant (secret serveur), jamais l'identifiant ni l'IP dans le journal d'audience.
 - Évènements typés envoyés par les pages (liste blanche) : chargement, jour_clic, recherche, filtre, filtres_effaces,
-  tri, hasard, clic_site, clic_maps, favori_ajout, favori_retrait, nouveau_clic, suggestion_ouverte, suggestion_erreur,
+  recherche_vide (3.3.0), tri, hasard, clic_site, clic_maps, favori_ajout, favori_retrait, nouveau_clic, suggestion_ouverte, suggestion_erreur,
   clic_mail, fiche_ouverte, historique_ouvert, ajout_ouvert, ajout_erreur, modification_ouverte, doublon_vu,
   quoi_de_neuf_clic. Écrits par le serveur uniquement : page_vue, suggestion, admin_*, et les contributions (ajout,
   modification, restauration, retrait, avis, avis_modifie, avis_supprime, presence, signalement, avis_masque_auto,
   statut_auto) — celles-ci **sans identifiant de navigateur**, pour qu'elles ne puissent pas être reliées à l'audience.
-- Exclusions : administration, API, statuts ≥ 400 et redirections, robots, requêtes autres que GET pour les pages vues.
+- Exclusions : administration, API, statuts ≥ 400 et redirections, robots (pages et évènements), requêtes autres que
+  GET pour les pages vues ; navigateur de l'administrateur à partir du jour de sa connexion (évènement serveur `admin_vu`).
 - Aucune statistique nominative ; agrégats conservés sans limite ; journaux bruts purgés après 13 mois.
 
 ## 7. Hors périmètre de cette version (feuille de route)
 
-- Phase 3 : tableau de bord statistique complet (rétention, cohortes, entonnoir, marqueurs de version).
 - Phase 4 : vue semaine, « déjà essayé », partage, thème sombre, plan local des emplacements.
 
 ## 8. Exigences non fonctionnelles

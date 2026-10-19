@@ -111,6 +111,14 @@ d'accueil, du plus proche au plus loin.
 - **Modifier** : changez les champs de la ligne puis **Enregistrer**.
 - **Supprimer** n'est possible que si aucun établissement n'utilise le lieu (comme lieu habituel ou pour un jour).
 
+## Après la mise à jour 3.3.0
+
+1. Ouvrez **Statistiques** : la première ouverture (ou la maintenance au démarrage) recalcule les statistiques depuis
+   les journaux existants ; cela prend au plus quelques secondes.
+2. Vérifiez que la courbe **Fréquentation** (bouton **Tout**) montre les traits `v3.1.0`, `v3.2.0` et `v3.3.0`.
+3. Ouvrez une fois l'administration **depuis chacun des navigateurs** que vous utilisez pour consulter le site : ils
+   seront exclus des statistiques à partir de ce jour.
+
 ## Après la mise à jour 3.2.0
 
 1. **À surveiller** : traitez une dernière fois les **suggestions héritées** (publier ou écarter).
@@ -143,29 +151,95 @@ Comptez environ une heure pour :
 
 ## Statistiques
 
-Bouton **Statistiques** (ou `/admin/statistiques.html`). Par défaut : les 30 derniers jours.
+Bouton **Statistiques** (ou `/admin/statistiques.html`). La page se lit de haut en bas : l'essentiel tient dans les
+cinq tuiles du haut, le détail vient ensuite.
 
-- Choisissez une période (**Du / Au** puis **Filtrer**) ou un raccourci (**7 derniers jours**, **30 derniers
-  jours**, **Tout**).
-- **Navigateurs actifs par jour / semaine / mois** : nombre de navigateurs différents ayant utilisé le site (moyenne
-  sur la période). Un navigateur ≈ un collègue sur un poste, mais une personne qui change de poste ou efface ses
-  cookies compte plusieurs fois : suivez les **tendances** plutôt que les valeurs exactes.
-- **Nouveaux navigateurs** : vus pour la première fois ; **récurrents** : déjà venus (graphique par semaine).
-- **Pages vues** : pages publiques réellement affichées (sans l'administration, les robots, les erreurs ni les
-  redirections). **Établissements ajoutés** : suggestions (avant la 3.2.0) puis ajouts directs, comptés par le serveur.
-- **Contributions** (dans « Utilisation des fonctions ») : ajouts, modifications, restaurations, avis, présences,
-  signalements, comptés par le serveur **sans identifiant de navigateur** (ils n'entrent pas dans les navigateurs
-  actifs et ne peuvent pas être reliés aux pages vues).
-- **Jours consultés** : clics sur les boutons de jour (le jour affiché à l'ouverture n'est plus compté).
-- **Activité par heure** : navigateurs actifs dans chaque tranche horaire.
-- **Utilisation des fonctions** : recherche, filtres, « Au hasard », favoris, clics Site / Maps…
-- **Établissements consultés** : clics sur « Site / menu » et « Plan Google Maps », séparés.
-- **Détails techniques** : pages, navigateurs, mois, requêtes, erreurs et temps de réponse du serveur.
-- **Rupture de série** : avant la 3.1.0, les visiteurs étaient comptés par **adresse IP** (courbe grise « ancien
-  calcul ») et le jour affiché au chargement était compté comme un clic. Ces anciennes valeurs ne sont pas
-  comparables aux nouvelles.
+**Ce que comptent les chiffres.** Un « navigateur » est un navigateur web sur un poste (cookie anonyme), pas une
+personne : un collègue qui utilise deux postes compte deux fois, deux collègues sur le même poste comptent une fois,
+un cookie effacé ou une navigation privée crée un « nouveau » navigateur. Les valeurs sont donc des **approximations
+du nombre de collègues (≈)** : fiez-vous surtout aux **tendances** et aux comparaisons d'une période à l'autre.
+L'administration n'est pas comptée, ni vos propres consultations du site public **à partir du jour où vous vous êtes
+connecté à l'administration** depuis ce navigateur ; les robots et les erreurs non plus. Aucun chiffre n'est
+nominatif et la page ne doit pas servir à surveiller des collègues.
 
-Aucune statistique n'est nominative : l'identifiant de navigateur n'est jamais affiché ni exporté.
+### Période
+
+**7 jours**, **30 jours** (par défaut), **Trimestre** (90 jours), **Personnalisée** (dates Du / Au puis **Afficher**)
+ou **Tout**. Les périodes finissent aujourd'hui ; la journée en cours est **provisoire** (elle est complétée jusqu'à
+minuit). Sauf pour « Tout », chaque tuile est comparée à la **période précédente de même durée** (▲ hausse en vert,
+▼ baisse en rouge, valeur précédente entre parenthèses). Pas de comparaison si la période précédente date d'avant la
+3.1.0 (anciens chiffres par adresse IP, non comparables).
+
+### Les cinq tuiles
+
+| Tuile | Ce que c'est | Limites |
+|---|---|---|
+| **Navigateurs actifs par jour** | Moyenne, sur les jours où il y a eu au moins une visite, du nombre de navigateurs différents venus ce jour-là | Les jours sans visite (week-ends, fériés) ne baissent pas la moyenne |
+| **Navigateurs actifs par semaine** | Moyenne du nombre de navigateurs différents venus sur les 7 derniers jours (fenêtre glissante, recalculée chaque jour) | Lisse les variations : réagit avec quelques jours de retard |
+| **Nouveaux navigateurs** | Navigateurs vus pour la toute première fois pendant la période | Comprend les cookies effacés, les nouveaux postes, et les navigateurs revenus après plus de 13 mois |
+| **Retour à S+1** | Parmi les navigateurs venus une semaine (lundi–dimanche), part revenue la semaine suivante, pour les semaines de la période dont la suivante est terminée (« 33 navigateurs sur 40 ») | « – » si aucune semaine n'est encore mesurable (période de 7 jours en cours de semaine, par exemple). Écart affiché en points |
+| **Contributions** | Ajouts, modifications, restaurations, avis (publiés ou modifiés), présences déclarées et signalements, comptés par le serveur ; « par N contributeurs distincts » | Les contributeurs sont comptés sur les contributions elles-mêmes (navigateurs, pas personnes) ; les présences de plus de 13 mois sont purgées, leurs auteurs ne sont plus comptés |
+
+### Graphiques et tableaux
+
+- **Fréquentation** : barres = navigateurs actifs chaque jour ; courbe = navigateurs actifs sur 7 jours glissants.
+  Traits orange verticaux : **mise en service d'une version** (`v3.2.0`, `v3.3.0`…), pour voir l'effet d'une nouveauté
+  sur la fréquentation. Trait gris « Rupture de série » et courbe grise pointillée : avant la 3.1.0, comptage par
+  adresse IP (non comparable).
+- **Nouveaux et récurrents par semaine** : nouveaux (première venue cette semaine-là) et récurrents (déjà venus avant).
+  La semaine en cours est marquée « (en cours) ».
+- **Jours et heures de visite** (carte de chaleur) : pour chaque jour de la semaine et chaque heure, nombre de
+  navigateurs actifs, additionné sur les jours de la période (un collègue venu trois lundis à midi compte 3 dans la
+  case « Lun 12h »). Plus la case est foncée, plus il y a de monde. Le week-end n'apparaît que s'il y a eu des visites.
+- **De la visite au déplacement** (entonnoir) : une **visite** est une suite de pages et de clics d'un navigateur sans
+  pause de plus de 30 minutes (coupée à minuit). On voit la part des visites qui ouvrent une fiche, combien de ces
+  fiches ne sont **pas suivies d'un clic** vers Google Maps ou le site (la fiche a suffi, ou n'a pas convaincu), et les
+  clics faits directement depuis la liste.
+- **Fonctionnalités utilisées** : part des visites qui utilisent au moins une fois la fiche, Maps, le site, le
+  changement de jour, la recherche, les filtres, le classement, « Au hasard », les favoris, « Nouveaux / Quoi de
+  neuf », l'historique, les formulaires. Le bandeau « Vos favoris présents aujourd'hui » n'est pas mesuré (il
+  s'affiche sans clic).
+- **Établissements** : fiches ouvertes, clics vers le site et vers Maps, confirmations « Il est là » sur la période ;
+  nombre d'avis et note **actuels** (note affichée à partir de 3 avis, comme sur le site).
+- **Contributions par semaine** : barres par type et courbe des contributeurs distincts. Au-dessus : nombre de
+  **nouveaux contributeurs** de la période et part d'entre eux qui ont **contribué à nouveau** (un autre jour) dans
+  les 14 jours ; ceux dont les 14 jours ne sont pas écoulés sont « encore dans leur délai ». On ne peut pas savoir si
+  un contributeur est revenu simplement **consulter** le site : par principe, contributions et visites ne sont pas
+  reliées.
+- **Fidélité par cohorte** : les navigateurs arrivés une semaine donnée et la part encore active 1, 2, 3… semaines
+  plus tard (cases vides : semaines pas encore terminées).
+- **Recherches sans résultat** : textes cherchés (30 premiers caractères) qui n'ont rien donné **parmi les
+  établissements du jour affiché, avec les filtres en cours** : un texte fréquent peut révéler un établissement ou une
+  cuisine qui manque — ou simplement un autre jour.
+- **Exporter** : trois fichiers CSV pour Excel (par jour, par semaine, par établissement) sur la période affichée,
+  sans aucun identifiant.
+- **Détails techniques** (à déplier) : requêtes au serveur, erreurs, temps de réponse moyen, navigateurs (Edge,
+  Chrome…), pages vues, jours consultés (clics sur un bouton de jour), tableau par mois (avec retour à M+1), liste de
+  tous les évènements, dernier jour enregistré dans les agrégats.
+- **Limites de mesure** : rappel permanent, en bas de page, de ce qui précède.
+
+### Où trouver la réponse à…
+
+| Question | Où regarder |
+|---|---|
+| Combien de collègues utilisent le site ? | Tuiles **Navigateurs actifs par jour / par semaine** ; mois dans **Détails techniques → Par mois** |
+| Les gens reviennent-ils ? | Tuile **Retour à S+1** ; **Nouveaux et récurrents par semaine** ; **Fidélité par cohorte** ; retour M+1 par mois |
+| Quels jours et à quelles heures ? | **Jours et heures de visite** ; jours choisis dans la liste : **Détails techniques → Jours consultés** |
+| Quelles fonctionnalités servent ? | **Fonctionnalités utilisées** (% des visites) |
+| Quels établissements intéressent ? | Tableau **Établissements** (fiches, clics, présences, avis) ; export « Par établissement » |
+| Les fiches sont-elles consultées sans aller sur Maps ? | **De la visite au déplacement** : ligne « dont … sans clic vers Maps ni le site » |
+| Le collaboratif fonctionne-t-il ? | Tuile **Contributions** (et contributeurs distincts) ; **Contributions par semaine** |
+| Les contributeurs reviennent-ils (après un avis, par exemple) ? | Texte au-dessus de **Contributions par semaine** (retour dans les 14 jours) |
+| Une nouveauté a-t-elle eu un effet ? | Traits de version sur **Fréquentation**, puis période personnalisée avant / après et comparaison des tuiles |
+| Manque-t-il des établissements ? | **Recherches sans résultat** |
+
+### Ce qui est conservé
+
+Les statistiques sont calculées **une fois par jour terminé** et enregistrées dans `data\stats-jours.json` (sans
+aucun identifiant, conservé sans limite) : les périodes anciennes restent consultables après la purge des journaux
+bruts (13 mois). Les journées d'avant la 3.3.0 sont recalculées automatiquement au premier démarrage tant que leurs
+journaux existent ; pour les périodes plus anciennes, visites, fonctionnalités, entonnoir et cohortes sont à zéro
+(non mesurés).
 
 ## Réglages (fichier `.env` sur le serveur)
 
@@ -204,7 +278,8 @@ Les données sont dans `data\` :
 | `foodtruckAValider.csv` | Suggestions héritées (ancienne file), jusqu'à leur traitement |
 | `usage-AAAA-MM.jsonl` | Évènements d'audience du mois (empreinte anonyme du navigateur, sans IP) |
 | `acces-AAAA-MM.log` | Journal technique du mois (adresses IP) |
-| `stats-jours.json` | Statistiques agrégées, conservées sans limite |
+| `stats-jours.json` | Statistiques agrégées (sans identifiant) et dates des versions, conservées sans limite |
+| `stats-etat.json` | État interne du calcul des statistiques (empreintes anonymes et dates de première / dernière visite) ; s'il est supprimé, tout est recalculé depuis les journaux |
 | `secret-stats.json` | Secret d'anonymisation (à ne pas diffuser) |
 | `usage.log`, `acces.log` | Anciens journaux (avant 3.1.0), encore lus ; leurs lignes de plus de 13 mois sont purgées |
 | `…-avant-migration-<date>.csv` | Copies faites avant une migration (3.1.0, 3.2.0) ; peuvent être supprimées une fois la migration vérifiée |
@@ -224,6 +299,8 @@ prochain démarrage (avec copie du fichier). Préférez l'administration : elle 
 - Avant la **première** purge, les anciens journaux sont copiés dans `sauvegardes\journaux-avant-premiere-purge\`.
   Ils contiennent des adresses IP : une fois les statistiques vérifiées, **supprimez ce dossier** (ou archivez-le
   selon la politique de conservation de votre service).
+- `stats-etat.json` (empreintes anonymes et dates de visite, nécessaires au calcul quotidien) : chaque empreinte en
+  est retirée 13 mois après sa dernière visite. Jamais affiché ni exporté.
 - Les **confirmations de présence** (`presences.jsonl`) sont purgées de la même façon après 13 mois ; les totaux par
   jour et par établissement sont gardés dans `stats-presences.json`.
 - Les **contributions** (fiches, historique, avis, signalements) sont conservées tant qu'elles sont publiées. Demande

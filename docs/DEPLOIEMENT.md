@@ -97,6 +97,27 @@ entre-temps (avis, présences, ajouts) seraient perdues : copier d'abord `data\`
 
 ---
 
+## B ter. Passage de la 3.2.0 à la 3.3.0 (tableau de bord des statistiques)
+
+Aucune migration du catalogue ni des contributions, aucun réglage nouveau dans `.env`.
+
+1. **Mise à jour** : procédure A (la copie de `data\` faite par le script suffit comme sauvegarde).
+2. **Vérifications** dans `pm2 logs foodtruck --lines 50` : démarrage normal, « Sauvegarde du jour : … » si ce
+   n'était pas déjà fait, aucune ligne « Maintenance (agregats) impossible ».
+3. Dans `data\` apparaît **`stats-etat.json`** (état interne du calcul des statistiques) ; `stats-jours.json` passe au
+   format 2. Au premier démarrage, les statistiques sont **recalculées une fois** depuis les journaux existants
+   (quelques secondes) ; les jours dont les journaux bruts ont déjà été purgés (plus de 13 mois) gardent leurs
+   agrégats 3.2.0. Si un problème survenait : arrêter le site, remettre `stats-jours.json` depuis
+   `sauvegardes\avant-mise-a-jour-<date>\`, supprimer `stats-etat.json`, redémarrer (nouveau recalcul).
+4. **Vérifier dans le navigateur** : `/admin/statistiques.html` → bouton **Tout** : courbe avec les traits `v3.1.0`,
+   `v3.2.0`, `v3.3.0` ; tuiles remplies ; **Exporter → Par jour** ouvre un CSV. Puis suivre « Après la mise à jour
+   3.3.0 » dans le guide administrateur.
+
+**Revenir à la 3.2.0** si nécessaire : réinstaller le zip 3.2.0 (procédure A), puis remettre `data\stats-jours.json`
+depuis `sauvegardes\avant-mise-a-jour-<date>\` et supprimer `data\stats-etat.json`.
+
+---
+
 ## C. Première installation (serveur neuf)
 
 1. Extraire le zip dans `C:\SITES\FoodTrucksNodejs`.

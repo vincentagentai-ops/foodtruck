@@ -1,4 +1,4 @@
-# Dossier technique — Food Trucks (v3.2.0)
+# Dossier technique — Food Trucks (v3.3.0)
 
 ## 1. Architecture
 
@@ -15,8 +15,8 @@ Navigateur ──HTTP──> Node.js (Express 4)
 ```
 
 - **Node.js ≥ 20.12** (testé en 24), **Express 4**, **nodemailer**, **Chart.js 4** (servi localement). Aucune nouvelle
-  dépendance en 3.1.0 ni en 3.2.0 (cookies, HMAC, limites, sauvegardes, distance d'édition : JavaScript pur / modules
-  intégrés de Node).
+  dépendance en 3.1.0, 3.2.0 ni 3.3.0 (cookies, HMAC, limites, sauvegardes, distance d'édition, statistiques : JavaScript
+  pur / modules intégrés de Node ; carte de chaleur et barres du tableau de bord en HTML).
 - Une seule instance (les écritures sont sérialisées dans le processus, compteurs de limites en mémoire) ; pm2.
 
 ## 2. Arborescence
@@ -38,7 +38,8 @@ src/
   migration.js          migration automatique 3.0.0 -> 3.1.0 -> 3.2.0 avec copie de sauvegarde
   stockage.js           file d'attente des écritures, écriture atomique avec réessais, JSON, cache des JSONL, secret
   audience.js           cookie ft_v, HMAC, liste blanche d'évènements, exclusions, normalisation des chemins
-  statistiques.js       journaux -> faits -> agrégats (jour, semaine, mois), stats-jours.json, purge
+  statistiques.js       journaux -> faits -> agrégats incrémentaux jour par jour (jour, semaine, mois, cohortes,
+                        visites), stats-jours.json + stats-etat.json, marqueurs de version, contributeurs, purge
   sauvegarde.js         copie quotidienne de data/ et rotation
   maintenance.js        enchaînement quotidien (sauvegarde, rotation, agrégats, purges, seuils), relancé toutes les heures
   limites.js            limites de fréquence en mémoire (par IP et par navigateur)
@@ -50,7 +51,8 @@ data/                   données d'exploitation (hors git)
 sauvegardes/            copies quotidiennes (hors git ; BACKUP_DIR)
 data-exemple/           jeu de données de référence au format 3.1.0
 scripts/                livraison (sh) et scripts Windows (installation, mise à jour, démarrage)
-test/                   tests node:test : unitaires, API, données (migration, agrégats, purge, sauvegarde), collaboration
+test/                   tests node:test : unitaires, API, données (migration, agrégats, purge, sauvegarde), collaboration,
+                        statistiques (tableau de bord 3.3.0)
 docs/                   documentation
 ```
 
@@ -68,7 +70,8 @@ docs/                   documentation
 | `foodtruckAValider.csv` | mêmes colonnes que le catalogue (l'ancien format sans en-tête reste lu) | Suggestions héritées (avant 3.2.0) | jusqu'au traitement |
 | `usage-AAAA-MM.jsonl` | `{ts, v, type, cible, page, version[, nav]}` | Évènements d'audience (v = HMAC du cookie) | 13 mois |
 | `acces-AAAA-MM.log` | `{timestamp, ip, url, method, status, durationMs, userAgent}` | Journal technique | 13 mois |
-| `stats-jours.json` | `{version, jours, semaines, mois, maj}` | Agrégats des périodes terminées | sans limite |
+| `stats-jours.json` | `{version: 2, traiteJusqua, jours, semaines, mois, cohortes, versions, maj}` | Agrégats des jours terminés, **sans identifiant** ; marqueurs de version | sans limite |
+| `stats-etat.json` | `{version, traiteJusqua, navigateurs: {empreinte: {p, d, a?}}, ips: {condensé: date}}` | État interne du calcul incrémental (première / dernière activité de chaque empreinte) ; jamais servi ni exporté | empreinte retirée 13 mois après sa dernière activité |
 | `secret-stats.json` | `{secret}` | Secret du HMAC si `STATS_SECRET` est vide | — |
 | `usage.log`, `acces.log` | anciens journaux (avant 3.1.0) | Lus pour l'historique (« ancien calcul » par IP), plus écrits | lignes de plus de 13 mois purgées |
 
@@ -133,27 +136,76 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
   normalisation : décodage, minuscules, `/` → `/index.html`), statut 2xx ou 304, navigateur non robot (liste de
   motifs : bot, curl, python, agent vide…).
 - **Évènements des pages** : `POST /api/evenements {type, cible, page}` ; types en liste blanche (`audience.js`,
-  `TYPES_PUBLICS`) ; types réservés au serveur → 403, inconnus → 400 ; corps ≤ 2 ko (413 au-delà) ; cible tronquée
-  à 80 caractères. `POST /api/log` (anciennes pages en cache) : libellés convertis en évènements typés ; ceux
-  commençant par « Admin » ou « Ajout de » → 403.
-- **Faits** : chaque ligne de journal (nouveau ou ancien) est ramenée à `{date, heure, source: navigateur|ip, id,
+  `TYPES_PUBLICS`, dont `recherche_vide` depuis la 3.3.0 : recherche sans résultat parmi les établissements du jour
+  affiché, texte tronqué à 30 caractères) ; types réservés au serveur → 403, inconnus → 400 ; corps ≤ 2 ko (413
+  au-delà) ; cible tronquée à 80 caractères. Évènements envoyés par un robot (même liste de motifs) : `204` sans
+  écriture. `POST /api/log` (anciennes pages en cache) : libellés convertis en évènements typés ; ceux commençant par
+  « Admin » ou « Ajout de » → 403.
+- **Navigateur de l'administrateur** : à la première requête authentifiée d'un navigateur qui a déjà un cookie,
+  l'évènement serveur `admin_vu` est écrit (une fois par démarrage et par navigateur). Toute empreinte qui produit un
+  évènement `admin_*` est marquée « administrateur » dans `stats-etat.json` et exclue de l'audience **à partir de ce
+  jour** (jour compris : pages publiques, évènements, visites) ; les jours précédents ne sont pas recalculés.
+- **Faits** : chaque ligne de journal (nouveau ou ancien) est ramenée à `{date, heure, t, source: navigateur|ip, id,
   type, cible, page, nav}`. Les anciens journaux donnent la source `ip`.
-- **Agrégat d'un jour** : `pagesVues`, `pages`, `actifs` (empreintes distinctes, hors actions admin), `actifsIp`
-  (ancien calcul), `nouveaux` (première apparition de l'empreinte ce jour-là), `heures` (actifs distincts par heure),
-  `navigateurs` (familles, actifs distincts), `evenements` (par type), `joursConsultes` (`jour_clic`),
-  `consultations` (`{id: {site, maps, autres}}`, `nom:<nom>` pour l'ancien calcul), `technique` (requêtes, erreurs,
-  durée totale). **Semaine** (ISO) et **mois** : `actifs`, `actifsIp`, `nouveaux`, `recurrents`.
-- **Enregistrement** : `stats-jours.json` reçoit les périodes **terminées** (jour < aujourd'hui, semaine / mois dont
-  le dernier jour est passé), une seule fois ; elles ne sont jamais recalculées. Les périodes en cours sont calculées
-  à la volée. La réponse de `/api/admin/statistiques` fusionne les deux : le résultat est identique au calcul brut,
-  avant comme après la purge (test « Agrégats enregistrés = calcul brut »).
+
+### Calcul incrémental (S5)
+
+- `Statistiques.mettreAJourAgregats(aujourdhui)` (maintenance horaire et chaque affichage) traite, **dans l'ordre et
+  une seule fois**, chaque jour terminé depuis `traiteJusqua` (`traiterJour`) ; seuls les journaux mensuels qui
+  peuvent contenir ces jours sont relus (pas les anciens journaux uniques). État et agrégats sont écrits ensemble
+  (état d'abord) avec la même date `traiteJusqua`.
+- **Reprise complète** (`reconstruire`) : à la première exécution en 3.3.0 (agrégats `version` 1), ou si
+  `traiteJusqua` diffère entre l'état et les agrégats (fichier restauré seul, écriture interrompue) : tout est recalculé
+  depuis les journaux bruts ; les agrégats des périodes antérieures au plus ancien journal brut (purgé) sont gardés
+  tels quels.
+- **Journée en cours** : calculée à chaque affichage sur une copie (`avecJourneeEnCours`), jamais enregistrée.
+- Par **jour** : `pagesVues`, `pages`, `actifs` (empreintes distinctes), `actifs7j` (empreintes actives sur les 7 jours
+  glissants qui finissent ce jour ; un jour sans visite a aussi un agrégat tant que ce nombre n'est pas nul),
+  `actifsIp` (ancien calcul), `nouveaux` (empreinte jamais vue), `visites` (suite d'évènements d'une empreinte sans
+  pause de plus de 30 min, coupée à minuit), `fonctionnalites` (visites contenant au moins un évènement de chaque
+  groupe : `FONCTIONNALITES`), `entonnoir` (`fiche` : visites avec `fiche_ouverte` ; `ficheClic` : avec fiche et
+  `clic_maps` / `clic_site` ; `clicSansFiche`), `heures` (empreintes distinctes par heure), `navigateurs`,
+  `evenements` (par type, contributions comprises), `joursConsultes`, `consultations` (`{id: {fiche, site, maps,
+  autres}}`), `recherchesVides` (`{texte: n}`), `technique`.
+- Par **semaine ISO** et par **mois** : `actifs`, `actifsIp`, `nouveaux` (première activité dans la période),
+  `retenus` (actifs dans la période **et** dans la précédente). Ces comptes distincts sont tenus à jour sans garder de
+  liste : une empreinte compte pour la semaine à sa première activité de la semaine (dernière activité connue
+  antérieure au lundi), et pour `retenus` si cette dernière activité tombe dans la semaine précédente.
+- **Cohortes** : `cohortes[semaine de première activité] = {debut, taille, semaines: [n0, n1, …]}` (26 semaines au plus).
+- **Oubli** : une empreinte sans activité depuis 13 mois est retirée de l'état (son cookie a expiré) ; revenue, elle
+  compterait comme nouvelle.
+- `calculerAgregats(faits, techniques, aujourdhui)` est le **calcul complet** (même moteur, depuis un état vide) : le
+  test « Calcul incrémental = calcul complet » compare les deux sur plusieurs exécutions successives.
+
+### Lecture (`construireStatistiques`)
+
+- **Tuiles** de la période [début, fin] et de la période précédente de même durée : `actifsJour` (moyenne des jours
+  avec visites), `actifsSemaine` (moyenne de `actifs7j` sur les jours couverts par la mesure), `nouveaux`, `visites`,
+  `pagesVues`, `retourS1` (`{taux, revenus, base}` : Σ `retenus` de S+1 / Σ `actifs` de S pour les semaines S qui
+  recoupent la période et dont la suivante est terminée), `contributions` (types `TYPES_CONTRIBUTION`).
+- Listes : `jours[]`, `semaines[]` (avec `recurrents`, `complete`, `retourS1`, contributions par type), `mois[]`
+  (avec `retourM1`), `cohortes[]` (12 dernières, 9 semaines, `observees` = semaines terminées), `carteChaleur[7][24]`
+  (lundi = 0), `entonnoir`, `fonctionnalites`, `recherchesVides` (30 premières), `versions`.
+- **Contributeurs** (`statistiquesContributeurs`, dans la route) : à partir des fichiers de contributions (`avis.jsonl`
+  créer / modifier / supprimer, `presences.jsonl`, `signalements.jsonl` signaler, `historique.jsonl`), en ne retenant
+  que les jetons d'auteur (24 caractères hexadécimaux : ni `admin` ni `systeme`). `contributeurs` (distincts sur la
+  période), `nouveaux` (première contribution connue dans la période), `revenus14` / `mesures14` / `tauxRetour14`
+  (nouvelle contribution un autre jour dans les 14 jours, pour les fenêtres écoulées), `enObservation`, `parSemaine`.
+  Ces fichiers ne sont pas des journaux d'audience : le jeton d'auteur (autre clé) n'est jamais relié à l'empreinte.
+- **Établissements** : `fiche`, `site`, `maps` (agrégats de la période), `confirmations` (déclarations « présent » de la
+  période : `presences.jsonl` + `stats-presences.json` pour les jours purgés), `avis` et `note` (situation actuelle ;
+  note à partir de 3 avis).
+- **Marqueurs de version** (S6) : `noterVersion(version)` au démarrage (`server.js`) ajoute `{version, date}` à
+  `stats-jours.json` si la version diffère de la dernière enregistrée ; la première fois, les versions déjà présentes
+  dans les journaux d'usage (champ `version`) sont reprises avec leur premier jour.
+- **Rupture de série** : `periode.debutNavigateurs` (premier jour avec des navigateurs actifs) ; la page trace un
+  marqueur et ne compare pas à une période précédente entièrement antérieure.
 - **Purge** (`Statistiques.purger`) : limite = aujourd'hui − 13 mois. Fichiers mensuels dont le mois est antérieur au
   mois de la limite : supprimés ; anciens fichiers uniques : réécrits sans les lignes antérieures à la limite (les
   lignes non datées sont gardées). Préalable obligatoire : agrégats mis à jour, **relus depuis le disque**, et présents
   pour chaque jour (et sa semaine / son mois) concerné ; sinon rien n'est supprimé et la raison est journalisée.
   Avant la première purge, les fichiers touchés sont copiés dans `<sauvegardes>/journaux-avant-premiere-purge/`.
-- Rupture de série : `periode.debutNavigateurs` (premier jour avec des navigateurs actifs) permet à la page de la
-  signaler.
+  Les périodes purgées restent consultables (test « Période chevauchant une purge »).
 
 ## 5. API
 
@@ -204,7 +256,8 @@ Les fichiers JSONL des contributions sont créés à la première contribution.
 | GET | `/api/admin/export/foodtrucks.csv`, `/api/admin/export/lieux.csv` | téléchargement |
 | GET / POST | `/api/admin/lieux` | liste (avec `utilisations`) / ajout `{nom, description, minutes_a_pied, maps}` |
 | PUT / DELETE | `/api/admin/lieux/:id` | modification / suppression (`409` si le lieu est utilisé) |
-| GET | `/api/admin/statistiques?debut=AAAA-MM-JJ&fin=AAAA-MM-JJ` | `{periode, totaux, jours[], semaines[], mois[], pages, heures, navigateurs, evenements, joursConsultes, consultations, technique, noms}` — aucun identifiant de navigateur |
+| GET | `/api/admin/statistiques?debut=AAAA-MM-JJ&fin=AAAA-MM-JJ` | `{periode (precedente, debutNavigateurs, traiteJusqua…), tuiles, precedente, totaux, jours[], semaines[], mois[], cohortes[], carteChaleur, entonnoir, fonctionnalites, recherchesVides[], etablissements[], contributeurs, versions[], pages, heures, navigateurs, evenements, joursConsultes, consultations, technique, noms}` — aucun identifiant de navigateur ni jeton d'auteur |
+| GET | `/api/admin/export/statistiques.csv?niveau=jours|semaines|etablissements&debut=&fin=` | agrégats de la période en CSV (valeurs neutralisées), sans identifiant |
 
 Codes : `400` données invalides (avec `details`) ou cookie absent, `401` authentification, `403` évènement réservé,
 autre origine, navigateur bloqué ou délai de grâce, `404`, `409` conflit, `413` corps trop gros, `415` corps non JSON,
@@ -248,7 +301,7 @@ Les variables déjà définies dans l'environnement priment sur le `.env`.
 
 ## 8. Tests
 
-`npm test` (node:test, aucune dépendance) : 63 tests.
+`npm test` (node:test, aucune dépendance) : 70 tests.
 
 - `test/unitaires.test.js` : CSV (virgules, guillemets, BOM, colonnes par nom, anciens formats), validation (nouveaux
   champs, listes fermées, lieu ou Maps, formules), catégories, TRUST_PROXY, limites de fréquence, réessais du
@@ -274,7 +327,16 @@ Les variables déjà définies dans l'environnement priment sur le `.env`.
   relecture impossible, agrégats incomplets) puis purge normale avec copie préalable, limite des 13 mois, sauvegarde
   quotidienne, restauration et rotation, maintenance complète.
 
-Les pages ont été vérifiées dans un navigateur (poste de travail) sur un dossier de données temporaire.
+- `test/statistiques.test.js` (3.3.0) : journaux fabriqués — DAU, WAU (7 jours glissants et semaine ISO), MAU,
+  nouveaux / récurrents, visites (pause de 30 min, coupure à minuit), fonctionnalités, entonnoir, retour à S+1,
+  cohortes, carte de chaleur, recherches sans résultat, comparaison à la période précédente, journée en cours ;
+  **calcul incrémental en plusieurs exécutions = calcul complet**, jour traité jamais recalculé, reprise complète si
+  l'état manque ; mise à jour depuis les agrégats 3.2.0 ; **période chevauchant une purge** ; marqueurs de version ;
+  contributeurs et retour à 14 jours ; API : **robots et navigateur de l'administrateur exclus**, **aucune empreinte,
+  aucun jeton d'auteur ni cookie dans la réponse ni dans les trois exports CSV**, `stats-etat.json` non servi.
+
+Les pages ont été vérifiées dans un navigateur (poste de travail) sur un dossier de données temporaire ; en 3.3.0, le
+tableau de bord l'a été avec un jeu de démonstration de 4 mois (journaux d'avant et d'après la 3.1.0, contributions).
 
 ## 9. Exploitation
 

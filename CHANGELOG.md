@@ -2,6 +2,37 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions numérotées MAJEUR.MINEUR.CORRECTIF.
 
+## [3.3.0] — 2026-10-19
+
+Phase 3 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md` §6.4) : tableau de bord des statistiques, lisible en
+30 secondes, sans aucune statistique nominative.
+
+### Ajouté
+- **Page Statistiques refondue** : période (7 jours, 30 jours, trimestre, personnalisée, tout) **comparée à la période
+  précédente** ; tuiles navigateurs actifs par jour, par semaine (7 jours glissants), nouveaux, **retour à S+1**,
+  contributions et **contributeurs distincts** ; courbe des actifs avec **marqueurs de version** et rupture de série
+  3.1.0 ; nouveaux / récurrents par semaine ; **carte de chaleur** heure × jour de semaine ; **entonnoir** visite →
+  fiche → Maps / site (fiches sans clic) ; **fonctionnalités en % des visites** ; tableau par établissement (fiches,
+  clics, présences confirmées, avis, note) ; contributions par type et par semaine et **retour des nouveaux
+  contributeurs dans les 14 jours** ; **cohortes hebdomadaires** ; **recherches sans résultat** ; détails techniques
+  repliés ; encadré « Limites de mesure » complété.
+- **Export CSV des agrégats** (par jour, par semaine, par établissement), sans aucun identifiant.
+- **Visites** : suite d'évènements d'un navigateur sans pause de plus de 30 minutes (coupée à minuit).
+- **Marqueurs de version** : chaque démarrage sur une nouvelle version enregistre `{version, date}` (les versions
+  précédentes sont reprises des journaux la première fois).
+- Évènement `recherche_vide` (recherche sans résultat, texte tronqué à 30 caractères) envoyé par la page d'accueil.
+
+### Modifié
+- **Calcul quotidien incrémental** : chaque jour terminé est agrégé une seule fois (jour, semaine, mois, cohortes) ;
+  la page ne relit plus tous les journaux bruts, seulement les agrégats et la journée en cours. État interne dans
+  `stats-etat.json` (empreinte anonyme → première et dernière visite, oubliée 13 mois après la dernière visite).
+  Recalcul automatique depuis les journaux au premier démarrage (agrégats 3.2.0 conservés pour les jours purgés).
+- **Exclusions** : le navigateur de l'administrateur est exclu de l'audience à partir du jour de sa connexion
+  (évènement serveur `admin_vu`) ; les évènements envoyés par des robots ne sont plus enregistrés.
+- Une empreinte inactive depuis plus de 13 mois redevient « nouvelle » (son cookie a expiré).
+- Page « Données et confidentialité » : état interne des statistiques et sa durée de conservation.
+- `npm test` : 70 tests (nouveau fichier `test/statistiques.test.js`).
+
 ## [3.2.0] — 2026-10-19
 
 Phase 2 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md`) : le site devient collaboratif, sans validation préalable
