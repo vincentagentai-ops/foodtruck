@@ -164,6 +164,14 @@ function creerApplication(config, options = {}) {
     app.use('/admin', exigerAdmin, express.static(DOSSIER_ADMIN));
     app.use('/api/admin', exigerAdmin);
 
+    // Défense en profondeur : une adresse qui, décodée, désigne l'administration sans passer par la route
+    // ci-dessus (/%61dmin/…) n'atteint jamais le statique public (même si un ancien public/admin traînait).
+    app.use((req, res, next) => {
+        const chemin = audience.normaliserChemin(req.path);
+        if (chemin === '/admin' || chemin.startsWith('/admin/')) return res.status(404).sendFile(path.join(DOSSIER_PUBLIC, '404.html'));
+        next();
+    });
+
     // --- Pages publiques (Chart.js est servi localement : pas de dépendance à un CDN)
     app.use(express.static(DOSSIER_PUBLIC, { index: 'index.html' }));
     app.get('/vendor/chart.umd.min.js', (req, res) => res.sendFile(CHART_JS));

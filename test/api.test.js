@@ -80,6 +80,17 @@ test("Pages d'administration inaccessibles sans mot de passe, sous toutes les va
         assert.ok([401, 404].includes(r.statut), `${url} -> ${r.statut}`);
         assert.doesNotMatch(r.texte, /formEtablissement|chargerSuggestions|Administration —/, url);
     }
+    // Même si un ancien public/admin traînait sur le serveur (mise à jour par extraction par-dessus)
+    const ancien = path.join(__dirname, '..', 'public', 'admin');
+    fs.mkdirSync(ancien);
+    try {
+        fs.writeFileSync(path.join(ancien, 'index.html'), 'Administration — ancienne page');
+        for (const url of ['/%61dmin/index.html', '/%41dmin/index.html', '/admin%2Findex.html']) {
+            assert.equal((await t.appel('GET', url)).statut, 404, url);
+        }
+    } finally {
+        fs.rmSync(ancien, { recursive: true, force: true });
+    }
     assert.equal((await t.appel('GET', '/api/admin/suggestions', undefined, { Authorization: 'Basic ' + Buffer.from('admin:faux').toString('base64') })).statut, 401);
     assert.equal((await t.appel('GET', '/admin/', undefined, AUTH)).statut, 200);
     assert.equal((await t.appel('GET', '/ADMIN/admin.js', undefined, AUTH)).statut, 200);

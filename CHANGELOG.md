@@ -2,6 +2,55 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions numérotées MAJEUR.MINEUR.CORRECTIF.
 
+## [3.1.0] — 2026-10-19
+
+Phase 1 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md`) : socle, mesure d'audience anonyme et aide au choix.
+
+### Ajouté
+- **Restaurants** en plus des foodtrucks (champ « type »).
+- Nouveau modèle de données : identifiant stable, catégorie de cuisine (liste fermée, libellé libre conservé),
+  étiquettes (végétarien possible, halal, sans gluten…), lieu, horaires, moyens de paiement (titres-restaurant papier
+  ou carte, CB, espèces), statut (actif, incertain, archivé), dates de création / modification, version.
+  **Migration automatique** au démarrage, avec copie du CSV d'origine (`…-avant-migration-<date>.csv`).
+- **Lieux** (`lieux.csv` : nom, description, minutes à pied, lien Maps) gérés dans l'administration ; la page d'accueil
+  regroupe les établissements par lieu (le plus proche d'abord), « Lieu à préciser » sinon.
+- Page d'accueil : **recherche** texte, **filtres** (cuisine, prix maximum, type, régime, paiement) mémorisés dans le
+  navigateur, classement par lieu / nom / prix, bouton **« Au hasard »**, **favoris** (étoile, bandeau « Vos favoris
+  présents aujourd'hui »), badge **« Nouveau »** (15 jours) et encadré « Nouveaux cette semaine », horaires et
+  paiements affichés.
+- Administration : un formulaire unique pour ajouter, modifier ou publier une suggestion (tous les champs), section
+  Lieux, filtre par statut, export de `lieux.csv`, pré-remplissage étendu (lieu, horaires, paiements, type…).
+- **Mesure d'audience anonyme** : cookie `ft_v` (aléatoire, 13 mois, non prolongé) ; seuls des HMAC de cet identifiant
+  sont journalisés ; évènements typés en liste blanche (`POST /api/evenements`) ; page Statistiques en **navigateurs
+  actifs** par jour / semaine / mois, nouveaux et récurrents, rupture de série signalée, encadré « Limites de mesure ».
+- Page **« Données et confidentialité »** (`/confidentialite.html`), liée en pied de page.
+- **Sauvegarde quotidienne** automatique de `data/` (CSV, JSON, JSONL) dans `sauvegardes/AAAA-MM-JJ/`, 30 jours conservés.
+- **Journaux mensuels** (`acces-AAAA-MM.log`, `usage-AAAA-MM.jsonl`), **agrégats** quotidiens / hebdomadaires /
+  mensuels conservés sans limite (`stats-jours.json`), **purge** des journaux bruts de plus de 13 mois (jamais avant que
+  les agrégats soient écrits et relus ; copie des anciens journaux avant la première purge).
+- Limites de fréquence (suggestions, évènements) par navigateur et par IP, réglables dans `.env`.
+- Livraison autonome : le zip contient `node_modules` ; `mettre-a-jour.bat` remplace entièrement les dossiers de code
+  (robocopy /MIR) sans `npm install`.
+
+### Corrigé / sécurité
+- Pages d'administration servies sans mot de passe via une adresse encodée (`/%61dmin/index.html`) : elles sont sorties
+  de `public/` (dossier `admin/`).
+- Statistiques falsifiables : `/api/log` refuse désormais les libellés d'administration ; les suggestions et les actions
+  d'administration sont comptées par le serveur ; taille des évènements limitée.
+- `TRUST_PROXY` accepte `loopback`, une IP ou une liste ; `true` affiche un avertissement (IP falsifiable).
+- En-têtes de sécurité : CSP sans `unsafe-inline`, `nosniff`, `frame-ancestors 'none'`, `Referrer-Policy` ; styles en
+  ligne supprimés.
+- Statistiques : administration, API, erreurs, redirections et robots exclus ; chemins normalisés ; « Jour sélectionné »
+  compté uniquement sur clic (évènement « chargement » distinct) ; clics Site et Maps séparés, clic molette compté.
+- Écriture des fichiers : réessais si le fichier est momentanément verrouillé sous Windows (Excel, antivirus).
+- Modifications de l'administration repérées par identifiant et version (409 si modifié entre-temps).
+
+### Modifié
+- `usage.log` et `acces.log` ne sont plus écrits (encore lus pour l'historique, comptés par adresse IP : « ancien
+  calcul »). Les statistiques d'avant le 3.1.0 ne sont pas comparables aux nouvelles.
+- Le lien Google Maps devient secondaire et facultatif si un lieu est renseigné.
+- `npm test` lance `test/*.test.js` (42 tests).
+
 ## [3.0.0] — 2026-10-19
 
 Reprise complète du projet dans `~/dev/foodtruck` (fusion de la prod v2 et des évolutions de `FoodTrucksTest`).
