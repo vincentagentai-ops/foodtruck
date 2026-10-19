@@ -96,7 +96,6 @@ function charger(env = process.env) {
         hotesAutorises: String(env.HOTES_AUTORISES || '').split(',').map(h => h.trim().toLowerCase()).filter(Boolean),
         // Limites de fréquence des écritures publiques, par navigateur et par heure (par IP : × LIMITE_FACTEUR_IP)
         limites: {
-            suggestions: entier(env.LIMITE_SUGGESTIONS, 20),
             evenements: entier(env.LIMITE_EVENEMENTS, 600),
             contributions: entier(env.LIMITE_CONTRIBUTIONS, 60), // ajouts, modifications, avis, présences, signalements
             facteurIp: Math.max(1, entier(env.LIMITE_FACTEUR_IP, 5)),

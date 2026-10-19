@@ -1,7 +1,7 @@
 {
   "name": "foodtruck",
-  "version": "3.1.0",
-  "description": "Liste des foodtrucks et restaurants autour du travail (Basso Cambo) : consultation par jour, recherche et filtres, suggestions, administration et statistiques anonymes.",
+  "version": "3.2.0",
+  "description": "Liste collaborative des foodtrucks et restaurants autour du travail (Basso Cambo) : consultation par jour, recherche et filtres, ajouts et corrections par tous, avis, présence du jour, administration et statistiques anonymes.",
   "main": "server.js",
   "private": true,
   "scripts": {

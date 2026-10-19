@@ -64,6 +64,39 @@ La 3.1.0 transforme les données au premier démarrage. Tout est automatique et 
 
 ---
 
+## B bis. Passage de la 3.1.0 à la 3.2.0 (collaboration, une seule fois)
+
+La 3.2.0 ajoute une colonne (`lieux_jours`) au catalogue et de nouveaux fichiers de contributions. La migration est
+automatique, avec copie du fichier d'origine.
+
+1. **Sauvegarde préalable** : copier tout `C:\SITES\FoodTrucksNodejs` en `C:\SITES\FoodTrucksNodejs_3.1.0_sauvegarde`.
+2. **Mise à jour** : procédure A.
+3. **`.env`** (Bloc-notes) : rien d'obligatoire. Facultatif : `LIMITE_CONTRIBUTIONS=60` (remplace
+   `LIMITE_SUGGESTIONS`, qui n'est plus lu) ; `HOTES_AUTORISES=` seulement si le site est appelé à travers un proxy qui
+   change le nom d'hôte (voir point 5). Après modification : `pm2 restart foodtruck`.
+4. **Vérifications** dans `pm2 logs foodtruck --lines 50` :
+   - « Données migrées au format 3.2.0. Copie des fichiers d'origine : …foodtrucks-avant-migration-<date>.csv » ;
+   - « Sauvegarde du jour : … » (si ce n'était pas déjà fait aujourd'hui) ; aucune ligne « ATTENTION ».
+5. **Vérifier dans le navigateur, depuis un poste de collègue** (pas depuis le serveur) :
+   - la page d'accueil liste les mêmes établissements ; « Quoi de neuf ? » en bas de page ;
+   - ouvrir une fiche, cliquer **✔ Il est là**, puis le recliquer pour retirer la déclaration ;
+   - donner un avis sur une fiche puis le **Supprimer** ;
+   - si une action affiche « Requête refusée : elle ne provient pas d'une page de ce site » : renseigner dans `.env`
+     `HOTES_AUTORISES=` avec le nom utilisé dans la barre d'adresse (ex. `foodtrucks,foodtrucks.entreprise.local`),
+     puis `pm2 restart foodtruck` ;
+   - `/admin/` : la section **À surveiller** est en haut ; traiter les **suggestions héritées** s'il en reste.
+6. **Mise en route** (≈ 15 min, dans `/admin/` → À surveiller) : fusionner les doublons connus (les deux fiches
+   L'épicurieux : fiche conservée = celle du mercredi, par exemple), vérifier les seuils, puis envoyer l'annonce aux
+   collègues.
+7. **Après quelques jours** : si tout va bien, supprimer `C:\SITES\FoodTrucksNodejs_3.1.0_sauvegarde` et les fichiers
+   `data\…-avant-migration-<date>.csv`.
+
+**Revenir à la 3.1.0** si nécessaire : `pm2 stop foodtruck`, remettre le dossier
+`C:\SITES\FoodTrucksNodejs_3.1.0_sauvegarde` à la place du site, `pm2 restart foodtruck`. Les contributions faites
+entre-temps (avis, présences, ajouts) seraient perdues : copier d'abord `data\` à part pour pouvoir les reprendre.
+
+---
+
 ## C. Première installation (serveur neuf)
 
 1. Extraire le zip dans `C:\SITES\FoodTrucksNodejs`.
@@ -119,8 +152,12 @@ avant chaque mise à jour dans `sauvegardes\avant-mise-a-jour-<date>\`.
 1. Arrêter le site : `pm2 stop foodtruck`.
 2. Mettre de côté l'état actuel : copier `data\` en `data_avant_restauration\`.
 3. Copier **les fichiers voulus** de la sauvegarde dans `data\` en remplaçant l'existant. En général :
-   `foodtrucks.csv`, `lieux.csv`, `foodtruckAValider.csv` (le catalogue). Pour revenir entièrement à un jour donné,
-   copier tous ses fichiers (`.csv`, `.json`, `.jsonl`).
+   `foodtrucks.csv`, `lieux.csv` (le catalogue). Pour revenir entièrement à un jour donné, copier tous ses fichiers
+   (`.csv`, `.json`, `.jsonl`).
+   Attention : `foodtrucks.csv` et `historique.jsonl` vont ensemble (les versions de l'historique doivent correspondre
+   aux fiches) ; restaurez-les ensemble. Pour annuler une seule modification, utilisez plutôt « Restaurer cette
+   version » sur la fiche. Les avis, présences et signalements (`avis.jsonl`, `presences.jsonl`,
+   `signalements.jsonl`) ne sont qu'ajoutés : restaurer une ancienne copie fait perdre les contributions plus récentes.
    Ne restaurez pas un ancien `stats-jours.json` par-dessus un plus récent sans raison : il contient les statistiques
    agrégées (un fichier plus ancien en contient moins).
 4. Redémarrer : `pm2 restart foodtruck`, puis vérifier la page d'accueil et `/admin/`.

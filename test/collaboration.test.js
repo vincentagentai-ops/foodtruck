@@ -510,3 +510,25 @@ test('Validation des avis (unitaire)', () => {
     assert.ok(validerAvis({ note: 3, texte: 42 }).erreurs);
     assert.ok(validerAvis({ note: 3, plat: 'x'.repeat(61) }).erreurs);
 });
+
+test('Migration 3.1.0 -> 3.2.0 : colonne lieux_jours ajoutée, copie du fichier d\'origine, aucune perte', async () => {
+    const { dossierTemporaire } = require('./outils');
+    const { Stockage } = require('../src/stockage');
+    const racine = dossierTemporaire();
+    const dossier = path.join(racine, 'data');
+    fs.mkdirSync(dossier);
+    const csv310 = 'id,nom,type,cuisine,categorie,etiquettes,jours,lieu,horaires,prix,paiements,site,emplacement,statut,cree_le,maj_le,version\n'
+        + 'abc234,Moya,foodtruck,Mexicain,Mexicaine,,Mercredi,,11h-14h,10-15,CB,,https://maps.app.goo.gl/m,actif,2026-10-01,2026-10-02,3\n';
+    fs.writeFileSync(path.join(dossier, 'foodtrucks.csv'), csv310);
+    try {
+        const stockage = new Stockage(charger({ DATA_DIR: dossier, BACKUP_DIR: path.join(racine, 's'), STATS_SECRET: 's'.repeat(40) }));
+        await stockage.initialiser();
+        assert.equal(stockage.migration.migre, true);
+        assert.equal(fs.readFileSync(stockage.migration.copies[0], 'utf8'), csv310);
+        const [ft] = await stockage.lireFoodtrucks();
+        assert.deepEqual([ft.id, ft.nom, ft.version, ft.horaires, ft.cree_le, ft.lieux_jours], ['abc234', 'Moya', '3', '11h-14h', '2026-10-01', '']);
+        assert.match(fs.readFileSync(path.join(dossier, 'foodtrucks.csv'), 'utf8').split('\n')[0], /,version,lieux_jours$/);
+    } finally {
+        fs.rmSync(racine, { recursive: true, force: true });
+    }
+});

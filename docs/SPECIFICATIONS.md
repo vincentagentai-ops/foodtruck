@@ -1,17 +1,20 @@
-# Spécifications fonctionnelles — Food Trucks (v3.1.0)
+# Spécifications fonctionnelles — Food Trucks (v3.2.0)
 
 ## 1. Objectif
 
 Site interne listant les foodtrucks **et restaurants** présents autour du lieu de travail (Basso Cambo, Toulouse),
 jour par jour, pour répondre en un coup d'œil à la question « Qu'est-ce que je veux manger aujourd'hui ? ».
 Utilisé depuis les postes de travail (lisible sur petit écran, sans optimisation mobile particulière).
+Depuis la 3.2.0, le site est **collaboratif** : les collègues ajoutent, corrigent, confirment et notent eux-mêmes ;
+tout est publié immédiatement, historisé et réparable ; l'administrateur n'est qu'un filet de sécurité.
 
 ## 2. Acteurs
 
 | Acteur | Accès | Besoins |
 |---|---|---|
-| Visiteur (collègue) | Libre, sans compte | Voir les établissements du jour, chercher, filtrer, garder ses favoris, ouvrir le site / le plan, suggérer un établissement |
-| Administrateur (un seul) | Identifiant + mot de passe (`/admin/`) | Valider/rejeter les suggestions, ajouter, corriger, archiver un établissement, gérer les lieux, consulter les statistiques |
+| Visiteur (collègue) | Libre, sans compte | Voir les établissements du jour, chercher, filtrer, garder ses favoris, ouvrir le site / le plan |
+| Contributeur (tout collègue dont le navigateur accepte le cookie du site) | Jeton anonyme de navigateur + nom déclaré facultatif | Ajouter, corriger, restaurer une version, confirmer la présence du jour, donner / modifier / supprimer son avis, signaler |
+| Administrateur (un seul) | Identifiant + mot de passe (`/admin/`) | Surveiller (signalements, avis masqués, modifications sensibles), restaurer, fusionner, purger, bloquer temporairement un navigateur, régler les seuils, gérer les lieux, consulter les statistiques |
 
 ## 3. Données
 
@@ -35,9 +38,24 @@ Utilisé depuis les postes de travail (lisible sur petit écran, sans optimisati
 | statut | oui (défaut actif) | `actif` (affiché), `incertain` (affiché en fin de liste, « présence à confirmer »), `archive` (masqué) |
 | cree_le, maj_le | auto | Dates AAAA-MM-JJ (vides pour les établissements antérieurs à la 3.1.0) |
 | version | auto | Entier incrémenté à chaque modification (détection des modifications concurrentes) |
+| lieux_jours | non | Lieu différent selon le jour : `Jeudi=parking-nord;Vendredi=https://…` (identifiant de lieu ou lien Maps) ; seuls les jours de présence sont gardés |
 
-Un même établissement présent à deux endroits différents selon le jour reste en deux fiches dans cette version
-(fusion prévue en phase 2).
+Un établissement présent à plusieurs endroits selon le jour est **une seule fiche** (`lieux_jours`), obtenue au besoin
+par fusion (A9).
+
+### 3.3 Contributions (fichiers JSONL en ajout seul)
+
+| Fichier | Contenu | Règles |
+|---|---|---|
+| `historique.jsonl` | `{ts, cible, version, auteur, pseudo, action, avant, apres}` ; action : creer, modifier, restaurer, retirer, statut_auto, fusion | Copie complète de la fiche avant / après : toute version connue est restaurable |
+| `avis.jsonl` | `{ts, id, cible, auteur, pseudo, note, texte, criteres, plat, action}` ; action : creer, modifier, supprimer, masquer, retablir | Note 1–5 obligatoire ; texte brut ≤ 280 car. ; critères à choix fermés (qualité-prix : bon / correct / cher ; portions : copieuses / normales / petites ; attente : < 5 min / 5–15 min / > 15 min) ; plat ≤ 60 car. ; un avis actif par navigateur et par fiche |
+| `presences.jsonl` | `{ts, date, cible, auteur, etat}` ; etat : present, absent, aucun (retrait) | Dernière déclaration d'un navigateur pour la fiche et le jour ; purge à 13 mois (totaux gardés) |
+| `signalements.jsonl` | `{ts, id, cible, type, date?, texte?, avis?, auteur, action: signaler}` puis `{ts, id, action: traiter}` | Types : plus_present, ferme (date entre aujourd'hui et +60 j), erreur (précision obligatoire ≤ 200 car.), inapproprie (avis visé), doublon ; un même navigateur ne compte qu'une fois |
+| `config-moderation.json` | `{seuils, blocages}` | Réglé par l'administrateur |
+
+`auteur` est un **jeton anonyme** (HMAC du cookie `ft_v` avec une clé propre aux contributions) ; `pseudo` est le nom
+déclaré (≤ 30 car., facultatif, affiché « nom déclaré »). L'auteur n'est jamais publié : l'API indique seulement
+`mien` pour les avis du navigateur qui consulte.
 
 ### 3.2 Lieu (`lieux.csv`)
 
@@ -52,8 +70,11 @@ Un même établissement présent à deux endroits différents selon le jour rest
 - **F3 – Regroupement par lieu** : les fiches sont regroupées par lieu (« Parking Nord · 3 min à pied »), lieux
   triés par temps de marche, « Lieu à préciser » en dernier. Classement alternatif par nom ou par prix (prix minimum,
   prix inconnus en fin de liste). Dans un groupe, les fiches « incertain » sont en dernier.
-- **F4 – Fiche** : nom, badges (Nouveau, Restaurant, Présence à confirmer), catégorie et libellé, prix, horaires,
-  étiquettes, paiements, liens « Site / menu » et « Plan Google Maps » (secondaire ; lien du lieu à défaut).
+- **F4 – Carte dans la liste** : nom (ouvre la fiche), badges (Nouveau, Restaurant, Présence à confirmer), catégorie
+  et libellé, prix, horaires, étiquettes, paiements, note des collègues (« ★ 4,3 (12 avis) » ; « Pas encore assez
+  d'avis » sous 3 avis), présence du jour (le jour courant seulement), bandeau « Fermé exceptionnellement » le jour
+  concerné, liens « Fiche, avis, présence », « Site / menu », « Plan Google Maps ». Le lieu affiché et le regroupement
+  tiennent compte du lieu du jour (`lieux_jours`).
 - **F5 – Recherche** : texte libre sur nom, cuisine, catégorie, étiquettes, paiements, type et nom du lieu ; accents et
   casse ignorés ; tous les mots doivent être trouvés.
 - **F6 – Filtres** : catégorie, prix maximum (8, 10, 12, 15 € ; prix inconnus exclus), type, régime (étiquette),
@@ -62,27 +83,67 @@ Un même établissement présent à deux endroits différents selon le jour rest
 - **F8 – Favoris** : étoile sur chaque fiche ; liste d'identifiants dans le stockage local du navigateur ; bandeau
   « Vos favoris présents aujourd'hui / le <jour> ».
 - **F9 – Nouveautés** : badge « Nouveau » pendant 15 jours après `cree_le` ; encadré « Nouveaux cette semaine » (7 jours).
-- **F10 – Suggérer un établissement** : formulaire (nom, type, catégorie, cuisine, jours, lieu ou lien Maps, prix,
-  horaires, paiements, site). Contrôle dans le navigateur puis sur le serveur ; suggestion mise en attente ; mail à
-  l'administrateur si le SMTP est configuré.
-- **F11 – Contact** : lien « Envoyez-moi un mail » (si `CONTACT_EMAIL` est défini) avec un modèle de message.
-- **F12 – Données et confidentialité** : page d'information (données, finalités, durées, accès, contact), liée en pied
-  de page.
+- **F10 – Ajouter un établissement (C1)** : formulaire (nom, type, catégorie, cuisine, jours, lieu habituel, lieu
+  selon le jour, lien Maps, prix, horaires, paiements, étiquettes, site, nom déclaré). Pendant la saisie du nom :
+  avertissement de **doublon** (nom normalisé sans accents, ponctuation ni mots vides — le, la, food, truck… —,
+  distance d'édition ≤ 2 ou inclusion ; ou même lien Maps ; « même lieu » précisé), avec lien vers la fiche existante,
+  **sans blocage**. Publication immédiate ; mail à l'administrateur si le SMTP est configuré. **Délai de grâce** :
+  pendant 30 min, seul l'auteur (même navigateur) peut modifier la fiche ou la **retirer** (archivage).
+- **F11 – Fiche (U3)** : fenêtre en trois blocs — « Aujourd'hui » (présence), « Infos — modifiables par tous »
+  (jours et lieu de chaque jour, liens, Modifier / Historique / Signaler), « Avis des collègues — opinions
+  personnelles, signées » (moyenne, avis, formulaire).
+- **F12 – Modifier les infos (C2)** : mêmes champs que l'ajout ; version attendue envoyée ; si la fiche a changé :
+  refus (409) et tableau des différences (version actuelle / votre saisie), « Repartir de la version actuelle ».
+  Le statut n'est pas modifiable par les collègues.
+- **F13 – Historique (C3)** : liste des versions (action, nom déclaré, date, champs avant → après) ; « Restaurer
+  cette version » (nouvelle version ; statut non restauré) ; la version antérieure à la première modification
+  enregistrée est aussi restaurable.
+- **F14 – Présence du jour (C4)** : « Il est là » / « Pas là aujourd'hui », une déclaration par navigateur, fiche et
+  jour, modifiable ou retirable ; affichage « Confirmé par N collègues (dernière à HHhMM) », « Signalé absent par N ».
+- **F15 – Signalements (C5)** : n'est plus présent, fermé exceptionnellement le JJ/MM (bandeau ce jour-là), info
+  erronée (note sur la fiche jusqu'à la prochaine modification), doublon ; contenu inapproprié sur un avis.
+- **F16 – Avis (C6/C7)** : note, commentaire, critères, plat conseillé, nom déclaré ; un par navigateur et par fiche,
+  modifiable et supprimable (suppression logique) par son auteur ; date relative, mention « modifié » ; moyenne avec
+  le nombre d'avis, « Pas encore assez d'avis » sous 3 avis.
+- **F17 – Quoi de neuf (C9)** : 30 derniers ajouts, modifications, restaurations, avis et fermetures signalées.
+- **F18 – Charte** de 5 lignes sous les formulaires d'ajout / de modification et d'avis.
+- **F19 – Contact** : lien « Écrire à l'administrateur » (si `CONTACT_EMAIL` est défini).
+- **F20 – Données et confidentialité** : page d'information (données, finalités, durées, accès, contact,
+  contributions et nom déclaré), liée en pied de page.
+
+### Effets automatiques (seuils réglables)
+
+| Règle | Défaut |
+|---|---|
+| Avis masqué au N-ième signalement « inapproprié » de navigateurs distincts (C13) | 3 |
+| « N'est plus présent » par N navigateurs distincts (depuis la dernière confirmation) **et** aucune confirmation depuis J1 jours → `incertain` | 2 navigateurs, 14 jours |
+| … aucune confirmation depuis J2 jours → `archive` (masqué, restaurable) | 30 jours |
+| Sans aucune confirmation, les jours se comptent depuis le premier signalement ; une confirmation ultérieure rend la fiche de nouveau active si son statut avait été changé automatiquement | — |
+| Délai de grâce de l'auteur d'un ajout | 30 min |
 
 ## 5. Fonctions — administration (`/admin/`)
 
-- **A1 – Suggestions** : liste ; « Compléter et publier » charge la suggestion dans le formulaire ; « Rejeter ».
+- **A1 – À surveiller (C12)** : suggestions héritées de l'ancienne file (publier / écarter) ; signalements ouverts
+  (clore, masquer l'avis, bloquer) ; avis masqués (rétablir, supprimer définitivement, bloquer) ; ajouts et
+  modifications des champs sensibles (nom, lieu, lieu selon le jour, lien Maps) et statuts automatiques sur 30 jours
+  (restaurer la version précédente, archiver) ; fiches incertaines ou archivées (remettre actif) ; blocages ; seuils.
 - **A2 – Formulaire établissement** : ajout, modification, publication d'une suggestion ; tous les champs du §3.1 ;
   pré-remplissage à partir d'un texte « Clé : valeur ».
-- **A3 – Établissements** : recherche, filtre par statut, modification, suppression définitive (l'archivage passe par
-  le statut).
+- **A3 – Établissements** : recherche, filtre par statut, modification (historisée « par l'administrateur »),
+  suppression définitive avec toutes les contributions liées (l'archivage passe par le statut). Remettre une fiche
+  « actif » clôt ses signalements « n'est plus présent ».
 - **A4 – Lieux** : ajout, modification en ligne, suppression si inutilisé ; nombre d'établissements par lieu.
-- **A5 – Sauvegarde** : téléchargement de `foodtrucks.csv` et `lieux.csv` ; sauvegarde quotidienne automatique.
+- **A5 – Sauvegarde** : téléchargement de `foodtrucks.csv`, `lieux.csv` et `avis.csv` (textes neutralisés pour Excel) ;
+  sauvegarde quotidienne automatique (tous les fichiers de `data/`).
 - **A6 – Statistiques** (`/admin/statistiques.html`) : période (dates, 7 j, 30 j, tout) ; navigateurs actifs par jour /
   semaine / mois (moyennes), nouveaux, pages vues, suggestions ; courbes par jour (avec l'ancien calcul par IP),
   nouveaux / récurrents par semaine, jours consultés, activité par heure ; utilisation des fonctions, établissements
   consultés (site / Maps) ; détails techniques ; limites de mesure.
 - **A7 – Conflits** : modification ou suppression refusée si la fiche a changé entre-temps (version) — « Rechargez la page ».
+- **A8 – Blocage** : suspension des contributions d'un jeton de navigateur pendant N jours (consultation possible).
+- **A9 – Fusion (C14)** : la fiche conservée reçoit les jours de l'autre (avec son lieu pour ces jours), l'union des
+  étiquettes et paiements, les champs manquants ; avis, présences, signalements et historique suivent ; l'ancien
+  identifiant est redirigé vers la fiche conservée.
 
 ## 6. Mesure d'audience
 
@@ -90,14 +151,15 @@ Un même établissement présent à deux endroits différents selon le jour rest
 - Journaux : HMAC de l'identifiant (secret serveur), jamais l'identifiant ni l'IP dans le journal d'audience.
 - Évènements typés envoyés par les pages (liste blanche) : chargement, jour_clic, recherche, filtre, filtres_effaces,
   tri, hasard, clic_site, clic_maps, favori_ajout, favori_retrait, nouveau_clic, suggestion_ouverte, suggestion_erreur,
-  clic_mail. Écrits par le serveur uniquement : page_vue, suggestion, admin_*.
+  clic_mail, fiche_ouverte, historique_ouvert, ajout_ouvert, ajout_erreur, modification_ouverte, doublon_vu,
+  quoi_de_neuf_clic. Écrits par le serveur uniquement : page_vue, suggestion, admin_*, et les contributions (ajout,
+  modification, restauration, retrait, avis, avis_modifie, avis_supprime, presence, signalement, avis_masque_auto,
+  statut_auto) — celles-ci **sans identifiant de navigateur**, pour qu'elles ne puissent pas être reliées à l'audience.
 - Exclusions : administration, API, statuts ≥ 400 et redirections, robots, requêtes autres que GET pour les pages vues.
 - Aucune statistique nominative ; agrégats conservés sans limite ; journaux bruts purgés après 13 mois.
 
 ## 7. Hors périmètre de cette version (feuille de route)
 
-- Phase 2 : contribution directe par tous (ajout, modification, historique, présence du jour, signalements, avis),
-  fusion des fiches multi-lieux, fin de la file de suggestions.
 - Phase 3 : tableau de bord statistique complet (rétention, cohortes, entonnoir, marqueurs de version).
 - Phase 4 : vue semaine, « déjà essayé », partage, thème sombre, plan local des emplacements.
 
@@ -106,7 +168,11 @@ Un même établissement présent à deux endroits différents selon le jour rest
 - Pas de base de données : fichiers CSV lisibles et modifiables à la main (UTF-8), journaux JSONL.
 - Fonctionne sans accès Internet (aucune ressource externe ; Chart.js est servi par l'application) ; livraison sans npm.
 - Un seul processus (pm2), port 80, serveur Windows ; pas de HTTPS ni de SSO.
-- Sécurité : CSP stricte, pages d'administration hors du dossier public, limites de fréquence, validation serveur.
-- Données personnelles : voir la page « Données et confidentialité » ; durées : journaux bruts 13 mois, agrégats sans
-  limite, sauvegardes 30 jours.
+- Sécurité : CSP stricte, pages d'administration hors du dossier public, limites de fréquence (contributions : 60 par
+  heure et par navigateur), validation serveur, écritures acceptées uniquement en JSON et depuis les pages du site
+  (en-tête `Origin`), textes saisis toujours affichés échappés, exports CSV neutralisés (`= + - @` tabulation, retour
+  chariot en tête).
+- Données personnelles : voir la page « Données et confidentialité » ; durées : journaux bruts et présences 13 mois,
+  agrégats sans limite, contributions tant qu'elles sont publiées (effaçables par l'administrateur), sauvegardes 30 jours.
+- Aucune statistique nominative.
 - Navigateurs : Chrome, Edge, Firefox récents.

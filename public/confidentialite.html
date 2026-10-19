@@ -17,7 +17,11 @@
         <section class="carte">
             <h2>En bref</h2>
             <ul>
-                <li>Ce site ne vous demande ni nom, ni adresse mail, ni compte.</li>
+                <li>Ce site ne vous demande ni adresse mail, ni compte. Pour signer vos contributions, vous pouvez
+                    <strong>déclarer un nom</strong> (facultatif, non vérifié) : il est affiché avec la mention « nom déclaré ».</li>
+                <li>Vos contributions (ajouts, corrections, avis, présences, signalements) sont rattachées à un
+                    <strong>jeton anonyme de votre navigateur</strong> : c'est lui qui vous permet de modifier ou supprimer votre avis.
+                    Il n'est jamais affiché et ne peut pas être relié à vos pages vues.</li>
                 <li>Un cookie anonyme sert uniquement à <strong>compter les navigateurs</strong> qui utilisent le site
                     (statistiques globales). Il ne contient aucune information sur vous.</li>
                 <li><strong>Aucune statistique nominative</strong> : personne ne peut savoir, avec ce site, qui a consulté quoi.</li>
@@ -52,9 +56,21 @@
                         <td>Sans limite (elles ne permettent d'identifier personne)</td>
                     </tr>
                     <tr>
-                        <td>Suggestions envoyées par le formulaire (informations sur l'établissement, pas sur vous)</td>
-                        <td>Compléter la liste après vérification</td>
-                        <td>Jusqu'à leur traitement par l'administrateur</td>
+                        <td>Contributions : établissements ajoutés, informations modifiées (avec leur historique), avis
+                            (note, commentaire, critères, plat conseillé), signalements — avec le nom déclaré s'il y en a un,
+                            la date et le jeton d'auteur (empreinte chiffrée du cookie, calculée avec une clé différente de celle
+                            de la mesure d'audience)</td>
+                        <td>Publication immédiate et visible par tous ; modification ou suppression de votre propre avis ;
+                            délai de 30 min pendant lequel l'auteur d'un ajout garde la main ; historique et restauration ;
+                            modération par l'administrateur (blocage temporaire d'un navigateur abusif)</td>
+                        <td>Tant qu'elles sont publiées. Un avis supprimé par son auteur est masqué mais reste dans les fichiers ;
+                            l'administrateur peut l'effacer définitivement sur demande</td>
+                    </tr>
+                    <tr>
+                        <td>Confirmations de présence du jour (« Il est là » / « Pas là aujourd'hui ») avec le jeton d'auteur</td>
+                        <td>Afficher « Confirmé par N collègues » ; une seule déclaration par navigateur et par jour ; détecter
+                            un établissement qui n'est plus présent</td>
+                        <td>13 mois, puis suppression automatique (seuls des totaux par jour sont gardés)</td>
                     </tr>
                     <tr>
                         <td>Dans votre navigateur seulement : favoris et filtres (stockage local)</td>
@@ -68,7 +84,10 @@
 
         <section class="carte">
             <h2>Qui y a accès ?</h2>
-            <p>Uniquement l'administrateur du site, et seulement sous forme de totaux sur la page des statistiques.
+            <p>Les contributions publiées (avec le nom déclaré) sont visibles par tous les collègues ; le jeton d'auteur ne
+                l'est jamais. Pour le reste : uniquement l'administrateur du site, et seulement sous forme de totaux sur la page des statistiques.
+                Pour modérer, il voit les huit premiers caractères du jeton d'un contributeur (ce qui permet de bloquer un
+                navigateur abusif, pas de savoir qui c'est).
                 Les journaux bruts restent sur le serveur interne. Rien n'est transmis à un service extérieur : le site
                 fonctionne sans Internet.</p>
             <p>Ces données ne doivent <strong>jamais</strong> servir à évaluer ou contrôler des collègues
@@ -80,7 +99,10 @@
             <ul>
                 <li>Refuser la mesure d'audience : bloquez ou supprimez les cookies de ce site dans votre navigateur
                     (le site fonctionne de la même façon).</li>
-                <li>Effacer vos favoris et filtres : supprimez les données de ce site dans les réglages de votre navigateur.</li>
+                <li>Effacer vos favoris, filtres et nom déclaré : supprimez les données de ce site dans les réglages de votre navigateur.</li>
+                <li>Modifier ou supprimer votre avis : depuis la fiche de l'établissement, avec le même navigateur. Si vous avez
+                    changé de navigateur, demandez à l'administrateur.</li>
+                <li>Contribuer sans cookie n'est pas possible : le cookie est ce qui garantit « un avis par navigateur ».</li>
                 <li>Une question, une demande d'effacement : <span id="contactConfidentialite">contactez l'administrateur du site</span>.</li>
             </ul>
         </section>

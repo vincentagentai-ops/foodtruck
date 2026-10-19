@@ -2,6 +2,58 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions numérotées MAJEUR.MINEUR.CORRECTIF.
 
+## [3.2.0] — 2026-10-19
+
+Phase 2 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md`) : le site devient collaboratif, sans validation préalable
+(« wiki de confiance, réparable »).
+
+### Ajouté
+- **Ajouter un établissement** publié immédiatement, avec avertissement de **doublon** (nom approché, même lien Maps)
+  et lien vers la fiche existante, sans blocage ; **délai de grâce** de 30 min pendant lequel l'auteur garde la main
+  (correction, retrait).
+- **Fiche d'un établissement** : infos « modifiables par tous », présence du jour, avis « opinions signées »,
+  historique, liens, signalements.
+- **Modification des infos par tous**, avec version attendue : si la fiche a changé entre-temps, refus et tableau des
+  différences.
+- **Historique** de chaque fiche (`historique.jsonl`, ajout seul) et **« Restaurer cette version »**.
+- **Présence du jour** : « Il est là » / « Pas là aujourd'hui », une déclaration par navigateur et par jour,
+  « Confirmé par N collègues (dernière à HHhMM) ».
+- **Avis** : note 1–5, commentaire ≤ 280 caractères, critères (qualité-prix, portions, attente), plat conseillé ; un
+  par navigateur et par établissement, modifiable et supprimable par son auteur ; moyenne à partir de 3 avis.
+- **Signalements** : n'est plus présent, fermé exceptionnellement le JJ/MM (bandeau ce jour-là), info erronée,
+  doublon, contenu inapproprié (avis masqué au 3e signalement de navigateurs distincts).
+- **Seuils automatiques** : « n'est plus présent » par 2 navigateurs et pas de confirmation depuis 14 jours →
+  incertain ; 30 jours → archivé (restaurable). Seuils réglables dans l'administration (`config-moderation.json`).
+- Fil **« Quoi de neuf ? »** (ajouts, modifications, avis, fermetures).
+- **Nom déclaré** facultatif (30 caractères), mémorisé dans le navigateur, affiché « nom déclaré ».
+- **Lieu différent selon le jour** (colonne `lieux_jours`) ; **fusion de deux fiches** par l'administrateur (avis,
+  présences, signalements et historique rattachés ; ancien identifiant redirigé).
+- Administration : section **« À surveiller »** (suggestions héritées, signalements, avis masqués, ajouts et
+  modifications sensibles, fiches incertaines / archivées, fusion, blocage temporaire d'un navigateur, seuils) ;
+  export `avis.csv` ; restauration d'une version.
+- Charte de 5 lignes sous les formulaires.
+- Page « Données et confidentialité » complétée (contributions, jeton d'auteur, nom déclaré, présences).
+
+### Sécurité
+- Toutes les écritures exigent du JSON (`415` sinon) et un en-tête `Origin` du site (`403` sinon ; `HOTES_AUTORISES`
+  pour les noms supplémentaires).
+- Auteur des contributions = HMAC du cookie avec une clé propre aux contributions : jamais le cookie en clair, non
+  reliable aux journaux d'audience ; contributions comptées par le serveur sans identifiant de navigateur.
+- Contribution impossible sans cookie déjà présent ; limites de fréquence (`LIMITE_CONTRIBUTIONS`, 60 par heure et par
+  navigateur) ; blocage temporaire par l'administrateur.
+- Exports CSV : valeurs commençant par `= + - @`, tabulation ou retour chariot préfixées d'une apostrophe.
+
+### Modifié
+- **Fin de la file de suggestions** : `/api/suggestions` redirige (308) vers `/api/etablissements` ; les suggestions
+  encore en attente apparaissent une dernière fois dans « À surveiller » (« suggestions héritées »).
+- Migration automatique au démarrage (ajout de la colonne `lieux_jours`, copie du fichier d'origine).
+- Suppression définitive d'une fiche par l'administrateur : ses avis, présences, signalements et son historique sont
+  effacés aussi.
+- Statistiques : « Établissements ajoutés » (suggestions puis ajouts directs) ; nouveaux types d'évènements.
+- Présences brutes purgées après 13 mois (totaux gardés dans `stats-presences.json`).
+- `LIMITE_SUGGESTIONS` n'est plus lu (remplacé par `LIMITE_CONTRIBUTIONS`).
+- `npm test` : 63 tests.
+
 ## [3.1.0] — 2026-10-19
 
 Phase 1 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md`) : socle, mesure d'audience anonyme et aide au choix.
