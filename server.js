@@ -4,11 +4,17 @@
 
 const { charger } = require('./src/config');
 const { creerApplication } = require('./src/app');
+const { demarrerMaintenance } = require('./src/maintenance');
 
 const config = charger();
 const app = creerApplication(config);
+config.avertissements.forEach(a => console.warn(`ATTENTION : ${a}`));
 
 app.locals.stockage.initialiser().then(() => {
+    const { migration } = app.locals.stockage;
+    if (migration.migre) {
+        console.log(`Données migrées au format 3.1.0. Copie des fichiers d'origine : ${migration.copies.join(', ')}`);
+    }
     app.listen(config.port, () => {
         console.log(`Food Trucks démarré sur http://localhost:${config.port} (données : ${config.dossierDonnees})`);
         if (!config.admin.motDePasse) {
@@ -17,6 +23,8 @@ app.locals.stockage.initialiser().then(() => {
         if (!config.mail.hote) {
             console.warn("SMTP_HOST non défini : aucun mail ne sera envoyé lors d'une suggestion.");
         }
+        // Sauvegarde quotidienne, agrégats statistiques et purge des journaux de plus de 13 mois
+        demarrerMaintenance({ config, statistiques: app.locals.statistiques });
     });
 }).catch(err => {
     console.error('Démarrage impossible :', err);

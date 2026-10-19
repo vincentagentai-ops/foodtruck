@@ -1,6 +1,8 @@
 node_modules/
 # Données d'exploitation (contiennent des adresses IP) : jamais dans git
 data/
+# Sauvegardes quotidiennes (BACKUP_DIR par défaut : à côté de data/)
+sauvegardes/
 .env
 *.tmp
 npm-debug.log*

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques — Food Trucks</title>
+    <link rel="icon" href="/img/logo.png" type="image/png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin">
+    <header class="entete">
+        <img src="/img/logo.png" alt="" class="logo">
+        <h1>Statistiques</h1>
+        <nav>
+            <a class="bouton secondaire petit" href="/">Site public</a>
+            <a class="bouton petit" href="/admin/">Administration</a>
+        </nav>
+    </header>
+
+    <main class="contenu">
+        <section class="carte">
+            <form class="barre-outils" id="formPeriode">
+                <div class="champ"><label for="debut">Du</label><input type="date" id="debut"></div>
+                <div class="champ"><label for="fin">Au</label><input type="date" id="fin"></div>
+                <button type="submit" class="bouton">Filtrer</button>
+                <button type="button" class="bouton secondaire" data-periode="7">7 derniers jours</button>
+                <button type="button" class="bouton secondaire" data-periode="30">30 derniers jours</button>
+                <button type="button" class="bouton secondaire" data-periode="tout">Tout</button>
+            </form>
+            <p class="aide" id="infoPeriode"></p>
+            <p class="rupture" id="rupture" hidden></p>
+        </section>
+
+        <div class="chiffres">
+            <div class="chiffre"><div class="valeur" id="cJour">–</div><div class="libelle">Navigateurs actifs par jour <small>(moyenne des jours avec visites)</small></div></div>
+            <div class="chiffre"><div class="valeur" id="cSemaine">–</div><div class="libelle">Navigateurs actifs par semaine <small>(moyenne)</small></div></div>
+            <div class="chiffre"><div class="valeur" id="cMois">–</div><div class="libelle">Navigateurs actifs par mois <small>(moyenne)</small></div></div>
+            <div class="chiffre"><div class="valeur" id="cNouveaux">–</div><div class="libelle">Nouveaux navigateurs</div></div>
+            <div class="chiffre"><div class="valeur" id="cPages">–</div><div class="libelle">Pages vues <small>(pages publiques, hors robots et erreurs)</small></div></div>
+            <div class="chiffre"><div class="valeur" id="cSuggestions">–</div><div class="libelle">Suggestions reçues <small>(comptées par le serveur)</small></div></div>
+        </div>
+
+        <section class="carte">
+            <h2>Fréquentation par jour</h2>
+            <div class="graphique"><canvas id="gDates" aria-label="Navigateurs actifs et pages vues par jour"></canvas></div>
+        </section>
+
+        <section class="carte">
+            <h2>Nouveaux et récurrents par semaine</h2>
+            <p class="aide">Nouveau : navigateur vu pour la première fois cette semaine-là. Récurrent : déjà venu avant.</p>
+            <div class="graphique"><canvas id="gSemaines" aria-label="Navigateurs nouveaux et récurrents par semaine"></canvas></div>
+        </section>
+
+        <div class="grille">
+            <section class="carte">
+                <h2>Jours consultés</h2>
+                <p class="aide">Clics sur un bouton de jour (l'affichage initial n'est plus compté).</p>
+                <div class="graphique"><canvas id="gJours" aria-label="Clics par jour de la semaine"></canvas></div>
+            </section>
+            <section class="carte">
+                <h2>Activité par heure</h2>
+                <p class="aide">Navigateurs actifs dans chaque tranche horaire, additionnés sur la période.</p>
+                <div class="graphique"><canvas id="gHeures" aria-label="Navigateurs actifs par heure"></canvas></div>
+            </section>
+        </div>
+
+        <div class="grille">
+            <section class="carte">
+                <h2>Utilisation des fonctions</h2>
+                <table class="tableau" id="tEvenements"><thead><tr><th>Action</th><th>Nombre</th></tr></thead><tbody></tbody></table>
+            </section>
+            <section class="carte">
+                <h2>Établissements consultés</h2>
+                <p class="aide">Clics (gauche ou molette) sur « Site / menu » et « Plan Google Maps ».</p>
+                <table class="tableau" id="tConsultes"><thead><tr><th>Établissement</th><th>Site</th><th>Maps</th><th>Ancien calcul</th></tr></thead><tbody></tbody></table>
+            </section>
+        </div>
+
+        <details class="carte">
+            <summary>Détails techniques</summary>
+            <div class="grille espace-haut">
+                <section>
+                    <h3>Pages vues</h3>
+                    <table class="tableau" id="tPages"><thead><tr><th>Page</th><th>Vues</th></tr></thead><tbody></tbody></table>
+                </section>
+                <section>
+                    <h3>Navigateurs</h3>
+                    <table class="tableau" id="tNavigateurs"><thead><tr><th>Navigateur</th><th>Actifs (jours cumulés)</th></tr></thead><tbody></tbody></table>
+                </section>
+                <section>
+                    <h3>Par mois</h3>
+                    <table class="tableau" id="tMois"><thead><tr><th>Mois</th><th>Actifs</th><th>Nouveaux</th><th>Récurrents</th><th>IP (ancien)</th></tr></thead><tbody></tbody></table>
+                </section>
+                <section>
+                    <h3>Serveur</h3>
+                    <table class="tableau" id="tTechnique"><thead><tr><th>Mesure</th><th>Valeur</th></tr></thead><tbody></tbody></table>
+                </section>
+            </div>
+        </details>
+
+        <section class="carte limites">
+            <h2>Limites de mesure</h2>
+            <ul>
+                <li>Les chiffres comptent des <strong>navigateurs</strong>, pas des personnes : une même personne sur deux
+                    postes ou deux navigateurs compte deux fois ; effacer ses cookies ou naviguer en privé crée un « nouveau »
+                    navigateur. Les tendances restent fiables, les valeurs absolues sont approchées (≈ collègues).</li>
+                <li>Le cookie anonyme dure 13 mois : au-delà, un navigateur réapparaît comme nouveau.</li>
+                <li>Sont exclus : l'administration, les appels techniques, les erreurs, les redirections et les robots.</li>
+                <li>Avant la version 3.1.0, les visiteurs étaient comptés par <strong>adresse IP</strong> (série « ancien calcul »)
+                    et le jour affiché au chargement était compté comme un clic : ces anciennes valeurs ne sont pas comparables.</li>
+                <li>Aucune statistique nominative : rien ne permet de savoir qui a consulté quoi.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="pied">
+        <a href="/confidentialite.html" class="lien-discret">Données et confidentialité</a>
+        <span id="version"></span>
+    </footer>
+
+    <script src="/vendor/chart.umd.min.js"></script>
+    <script src="/js/commun.js"></script>
+    <script src="/admin/statistiques.js"></script>
+</body>
+</html>

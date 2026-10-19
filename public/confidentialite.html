@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Données et confidentialité — Food Trucks</title>
+    <link rel="icon" href="/img/logo.png" type="image/png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="entete">
+        <a href="/"><img src="/img/logo.png" alt="Retour à l'accueil" class="logo"></a>
+        <h1>Données et confidentialité</h1>
+    </header>
+
+    <main class="contenu texte">
+        <section class="carte">
+            <h2>En bref</h2>
+            <ul>
+                <li>Ce site ne vous demande ni nom, ni adresse mail, ni compte.</li>
+                <li>Un cookie anonyme sert uniquement à <strong>compter les navigateurs</strong> qui utilisent le site
+                    (statistiques globales). Il ne contient aucune information sur vous.</li>
+                <li><strong>Aucune statistique nominative</strong> : personne ne peut savoir, avec ce site, qui a consulté quoi.</li>
+                <li>Vos favoris et vos filtres restent <strong>dans votre navigateur</strong> ; ils ne sont pas envoyés au serveur.</li>
+            </ul>
+        </section>
+
+        <section class="carte">
+            <h2>Données collectées et finalités</h2>
+            <table class="tableau">
+                <thead><tr><th>Donnée</th><th>Pourquoi</th><th>Durée de conservation</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Cookie <code>ft_v</code> : un identifiant tiré au hasard à votre première visite</td>
+                        <td>Mesure d'audience anonyme : nombre de navigateurs actifs par jour, semaine et mois, nouveaux et récurrents</td>
+                        <td>13 mois, non prolongé (un nouvel identifiant est tiré ensuite)</td>
+                    </tr>
+                    <tr>
+                        <td>Évènements d'utilisation : pages vues, jour choisi, recherches, filtres, clics sur « Site » ou « Plan », favoris, « Au hasard »</td>
+                        <td>Savoir quelles fonctions servent et améliorer le site. Ils sont rattachés à une empreinte chiffrée du cookie
+                            (jamais au cookie lui-même), <strong>sans adresse IP</strong></td>
+                        <td>13 mois, puis suppression automatique</td>
+                    </tr>
+                    <tr>
+                        <td>Journal technique : adresse IP, page demandée, navigateur, heure, code de réponse</td>
+                        <td>Sécurité (limites contre les abus) et diagnostic des pannes</td>
+                        <td>13 mois, puis suppression automatique</td>
+                    </tr>
+                    <tr>
+                        <td>Statistiques agrégées : totaux par jour, semaine et mois, sans aucun identifiant</td>
+                        <td>Suivre l'évolution de l'utilisation dans le temps</td>
+                        <td>Sans limite (elles ne permettent d'identifier personne)</td>
+                    </tr>
+                    <tr>
+                        <td>Suggestions envoyées par le formulaire (informations sur l'établissement, pas sur vous)</td>
+                        <td>Compléter la liste après vérification</td>
+                        <td>Jusqu'à leur traitement par l'administrateur</td>
+                    </tr>
+                    <tr>
+                        <td>Dans votre navigateur seulement : favoris et filtres (stockage local)</td>
+                        <td>Vous retrouver vos préférences</td>
+                        <td>Jusqu'à ce que vous effaciez les données du site dans votre navigateur</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="aide-tableau">Les données du serveur sont copiées chaque jour dans une sauvegarde conservée 30 jours.</p>
+        </section>
+
+        <section class="carte">
+            <h2>Qui y a accès ?</h2>
+            <p>Uniquement l'administrateur du site, et seulement sous forme de totaux sur la page des statistiques.
+                Les journaux bruts restent sur le serveur interne. Rien n'est transmis à un service extérieur : le site
+                fonctionne sans Internet.</p>
+            <p>Ces données ne doivent <strong>jamais</strong> servir à évaluer ou contrôler des collègues
+                (horaires de pause, habitudes…). Les chiffres affichés comptent des <em>navigateurs</em>, pas des personnes.</p>
+        </section>
+
+        <section class="carte">
+            <h2>Vos choix</h2>
+            <ul>
+                <li>Refuser la mesure d'audience : bloquez ou supprimez les cookies de ce site dans votre navigateur
+                    (le site fonctionne de la même façon).</li>
+                <li>Effacer vos favoris et filtres : supprimez les données de ce site dans les réglages de votre navigateur.</li>
+                <li>Une question, une demande d'effacement : <span id="contactConfidentialite">contactez l'administrateur du site</span>.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="pied">
+        <a href="/" class="lien-discret">Retour à la liste</a>
+        <span id="version"></span>
+    </footer>
+
+    <script src="/js/commun.js"></script>
+    <script src="/js/confidentialite.js"></script>
+</body>
+</html>

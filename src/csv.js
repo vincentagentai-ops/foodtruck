@@ -3,9 +3,15 @@
 // Lecture / écriture CSV conforme RFC 4180 (séparateur virgule, guillemets doubles).
 // Gère les virgules et guillemets dans les valeurs (ex. URL Google Maps longues),
 // les fins de ligne Windows (\r\n) et l'absence de saut de ligne final.
+// Les colonnes sont retrouvées par leur nom dans l'en-tête : un ancien fichier (colonnes manquantes)
+// est lu avec des valeurs vides, et les colonnes inconnues sont ignorées.
 
-const COLONNES = ['nom', 'cuisine', 'jours', 'emplacement', 'prix', 'site'];
-const ENTETE = 'Nom,Cuisine,Jours,Emplacement,Prix,Site';
+// Catalogue des établissements (3.1.0)
+const COLONNES = ['id', 'nom', 'type', 'cuisine', 'categorie', 'etiquettes', 'jours', 'lieu', 'horaires', 'prix',
+    'paiements', 'site', 'emplacement', 'statut', 'cree_le', 'maj_le', 'version'];
+// Format de la 3.0.0 et des versions précédentes (aussi utilisé sans en-tête par l'ancien foodtruckAValider.csv)
+const ANCIENNES_COLONNES = ['nom', 'cuisine', 'jours', 'emplacement', 'prix', 'site'];
+const COLONNES_LIEUX = ['id', 'nom', 'description', 'minutes_a_pied', 'maps'];
 
 /** Découpe un texte CSV en lignes de valeurs (tableau de tableaux). */
 function parserCSV(texte) {
@@ -57,24 +63,53 @@ function serialiserCSV(lignes) {
     return lignes.map(l => l.map(echapper).join(',')).join('\n') + '\n';
 }
 
-/** Lignes CSV -> objets foodtruck. `avecEntete` : la première ligne est l'en-tête. */
-function versFoodtrucks(texte, avecEntete) {
+/** « Minutes à pied » -> « minutes_a_pied » (comparaison des noms de colonnes). */
+function nomColonne(texte) {
+    return String(texte).normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .trim().toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+/**
+ * Texte CSV -> objets. La première ligne est un en-tête si elle contient le nom d'une colonne connue
+ * en première position (« id » ou « nom ») ; sinon les colonnes sont `sansEntete`, dans l'ordre.
+ */
+function versObjets(texte, colonnes, sansEntete = colonnes) {
     let lignes = parserCSV(texte);
-    if (avecEntete || (lignes[0] && lignes[0][0].trim().toLowerCase() === 'nom')) {
+    let ordre = sansEntete;
+    if (lignes[0] && ['id', 'nom'].includes(nomColonne(lignes[0][0]))) {
+        ordre = lignes[0].map(nomColonne);
         lignes = lignes.slice(1);
     }
     return lignes.map(l => {
-        const ft = {};
-        COLONNES.forEach((col, i) => { ft[col] = (l[i] || '').trim(); });
-        return ft;
+        const objet = {};
+        for (const col of colonnes) {
+            const i = ordre.indexOf(col);
+            objet[col] = i >= 0 ? (l[i] || '').trim() : '';
+        }
+        return objet;
     });
 }
 
-/** Objets foodtruck -> texte CSV. */
-function depuisFoodtrucks(foodtrucks, avecEntete) {
-    const lignes = foodtrucks.map(ft => COLONNES.map(col => ft[col] || ''));
-    if (avecEntete) lignes.unshift(ENTETE.split(','));
-    return serialiserCSV(lignes);
+/** Objets -> texte CSV avec en-tête. */
+function depuisObjets(objets, colonnes) {
+    return serialiserCSV([colonnes, ...objets.map(o => colonnes.map(col => (o[col] == null ? '' : o[col])))]);
 }
 
-module.exports = { COLONNES, ENTETE, parserCSV, serialiserCSV, versFoodtrucks, depuisFoodtrucks };
+/** A-t-on lu un fichier au format complet ? (sinon : migration nécessaire) */
+function enteteComplete(texte, colonnes) {
+    const premiere = parserCSV(texte)[0];
+    if (!premiere) return false;
+    const entete = premiere.map(nomColonne);
+    return colonnes.every(c => entete.includes(c));
+}
+
+const versFoodtrucks = texte => versObjets(texte, COLONNES, ANCIENNES_COLONNES);
+const depuisFoodtrucks = foodtrucks => depuisObjets(foodtrucks, COLONNES);
+const versLieux = texte => versObjets(texte, COLONNES_LIEUX);
+const depuisLieux = lieux => depuisObjets(lieux, COLONNES_LIEUX);
+
+module.exports = {
+    COLONNES, ANCIENNES_COLONNES, COLONNES_LIEUX,
+    parserCSV, serialiserCSV, versObjets, depuisObjets, enteteComplete,
+    versFoodtrucks, depuisFoodtrucks, versLieux, depuisLieux,
+};

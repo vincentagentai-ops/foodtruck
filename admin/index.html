@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration — Food Trucks</title>
+    <link rel="icon" href="/img/logo.png" type="image/png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin">
+    <header class="entete">
+        <img src="/img/logo.png" alt="" class="logo">
+        <h1>Administration</h1>
+        <nav>
+            <a class="bouton secondaire petit" href="/">Site public</a>
+            <a class="bouton petit" href="/admin/statistiques.html">Statistiques</a>
+        </nav>
+    </header>
+
+    <main class="contenu large">
+        <section class="carte">
+            <h2>Suggestions à valider <span id="nbSuggestions"></span></h2>
+            <p class="aide">« Compléter et publier » charge la suggestion dans le formulaire ci-dessous : vérifiez, complétez
+                (lieu, paiements…) puis publiez. « Rejeter » la supprime.</p>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tableSuggestions">
+                    <thead><tr><th>Nom</th><th>Type</th><th>Cuisine</th><th>Jours</th><th>Lieu / emplacement</th><th>Prix</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="carte" id="carteFormulaire">
+            <h2 id="titreFormulaire">Ajouter un établissement</h2>
+            <p class="info-mode" id="infoMode" hidden></p>
+            <details id="detailsImport">
+                <summary>Pré-remplir à partir d'un texte (mail reçu…)</summary>
+                <p class="aide">Collez un texte de la forme « Nom : … », « Type de cuisine : … », « Jours : … », « Lieu : … »,
+                    « Emplacement Google Maps : … », « Fourchette de prix : … », « Horaires : … », « Paiements acceptés : … »,
+                    « Site : … » (une information par ligne).</p>
+                <textarea id="texteImport" rows="7" placeholder="Nom : Moya&#10;Type de cuisine : Mexicain&#10;Jours : Mercredi&#10;Emplacement Google Maps : https://maps.app.goo.gl/…&#10;Fourchette de prix : 10-15&#10;Paiements acceptés : CB, titres-restaurant carte&#10;Site : https://…"></textarea>
+                <p><button type="button" class="bouton secondaire petit" id="boutonImport">Pré-remplir le formulaire</button></p>
+            </details>
+            <form id="formEtablissement" class="formulaire" novalidate>
+                <div class="grille">
+                    <div class="champ"><label for="f-nom">Nom <span class="requis">*</span></label><input type="text" id="f-nom" name="nom" maxlength="80"></div>
+                    <div class="champ"><label for="f-type">Type</label>
+                        <select id="f-type" name="type"><option value="foodtruck">Foodtruck</option><option value="restaurant">Restaurant</option></select></div>
+                    <div class="champ"><label for="f-cuisine">Cuisine (libellé libre) <span class="requis">*</span></label><input type="text" id="f-cuisine" name="cuisine" maxlength="80" placeholder="Ex : Japonais"></div>
+                    <div class="champ"><label for="f-categorie">Catégorie</label>
+                        <select id="f-categorie" name="categorie"><option value="">(déduite de la cuisine)</option></select></div>
+                    <div class="champ"><label for="f-lieu">Lieu</label>
+                        <select id="f-lieu" name="lieu"><option value="">(lieu à préciser)</option></select></div>
+                    <div class="champ"><label for="f-emplacement">Lien Google Maps <small>(obligatoire sans lieu)</small></label><input type="url" id="f-emplacement" name="emplacement"></div>
+                    <div class="champ"><label for="f-horaires">Horaires</label><input type="text" id="f-horaires" name="horaires" maxlength="60" placeholder="Ex : 11h30-14h"></div>
+                    <div class="champ"><label for="f-prix">Prix (€)</label><input type="text" id="f-prix" name="prix" placeholder="Ex : 10-15"></div>
+                    <div class="champ"><label for="f-site">Site web</label><input type="url" id="f-site" name="site"></div>
+                    <div class="champ"><label for="f-statut">Statut</label>
+                        <select id="f-statut" name="statut">
+                            <option value="actif">Actif (affiché)</option>
+                            <option value="incertain">Incertain (affiché « présence à confirmer »)</option>
+                            <option value="archive">Archivé (masqué)</option>
+                        </select></div>
+                </div>
+                <fieldset class="champ"><legend>Jours <span class="requis">*</span></legend><div class="cases-jours" id="f-jours"></div></fieldset>
+                <fieldset class="champ"><legend>Étiquettes</legend><div class="cases-jours" id="f-etiquettes"></div></fieldset>
+                <fieldset class="champ"><legend>Paiements acceptés</legend><div class="cases-jours" id="f-paiements"></div></fieldset>
+                <ul class="erreurs" id="erreursFormulaire" hidden></ul>
+                <div class="ligne-boutons">
+                    <button type="submit" class="bouton" id="boutonEnregistrer">Ajouter et publier</button>
+                    <button type="button" class="bouton secondaire" id="boutonAnnuler" hidden>Annuler</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="carte">
+            <h2>Établissements <span id="nbPublies"></span></h2>
+            <div class="barre-outils">
+                <div class="champ"><label for="filtre">Rechercher</label><input type="search" id="filtre" placeholder="Nom, cuisine, jour, lieu…"></div>
+                <div class="champ"><label for="filtreStatut">Statut</label>
+                    <select id="filtreStatut"><option value="">Tous</option><option value="actif">Actifs</option><option value="incertain">Incertains</option><option value="archive">Archivés</option></select></div>
+                <a class="bouton secondaire" href="/api/admin/export/foodtrucks.csv">Télécharger le CSV (sauvegarde)</a>
+            </div>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tablePublies">
+                    <thead><tr><th>Nom</th><th>Type</th><th>Catégorie</th><th>Jours</th><th>Lieu</th><th>Prix</th><th>Paiements</th><th>Statut</th><th>Mis à jour</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="carte">
+            <h2>Lieux <span id="nbLieux"></span></h2>
+            <p class="aide">Les lieux regroupent les établissements sur la page d'accueil (« Parking Nord · 3 min à pied »).
+                Modifiez les champs puis « Enregistrer » sur la ligne. Un lieu utilisé ne peut pas être supprimé.</p>
+            <div class="tableau-conteneur">
+                <table class="tableau" id="tableLieux">
+                    <thead><tr><th>Nom</th><th>Description</th><th>Minutes à pied</th><th>Lien Maps</th><th>Utilisé par</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr id="ligneNouveauLieu">
+                            <td><input type="text" data-champ="nom" maxlength="60" placeholder="Ex : Parking Nord" aria-label="Nom du nouveau lieu"></td>
+                            <td><input type="text" data-champ="description" maxlength="200" placeholder="Ex : devant l'entrée du bâtiment B" aria-label="Description"></td>
+                            <td><input type="text" data-champ="minutes_a_pied" maxlength="2" placeholder="3" aria-label="Minutes à pied"></td>
+                            <td><input type="url" data-champ="maps" placeholder="https://maps.app.goo.gl/…" aria-label="Lien Maps"></td>
+                            <td></td>
+                            <td class="actions"><button type="button" class="bouton succes petit" id="boutonAjouterLieu">Ajouter</button></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <p><a class="lien-discret" href="/api/admin/export/lieux.csv">Télécharger lieux.csv</a></p>
+        </section>
+    </main>
+
+    <footer class="pied">
+        <a href="/confidentialite.html" class="lien-discret">Données et confidentialité</a>
+        <span id="version"></span>
+    </footer>
+
+    <script src="/js/commun.js"></script>
+    <script src="/admin/admin.js"></script>
+</body>
+</html>

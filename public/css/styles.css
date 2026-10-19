@@ -269,6 +269,96 @@ input:hover, select:hover, textarea:hover { border-color: var(--primaire-clair);
 .graphique { position: relative; height: 280px; }
 details.carte summary { cursor: pointer; font-weight: 600; }
 
+/* --- Pages simples (404, confidentialité) */
+.centre { text-align: center; }
+.logo-grand { height: 120px; width: auto; }
+.texte { max-width: 900px; }
+.texte li { margin-bottom: 6px; }
+code { background: var(--survol); padding: 1px 5px; border-radius: 4px; }
+.aide-tableau { color: var(--texte-2); font-size: 0.9rem; margin: 12px 0 0; }
+
+/* --- Recherche et filtres */
+.outils { padding: 16px 20px; }
+.ligne-outils { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ligne-outils .champ { margin: 0; flex: 1 1 170px; }
+.ligne-outils .champ.recherche { flex: 2 1 260px; }
+.plus-filtres { margin-top: 12px; }
+.plus-filtres summary { cursor: pointer; color: var(--primaire); font-weight: 500; margin-bottom: 10px; }
+.ligne-boutons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+.aide-filtres { color: var(--texte-2); font-size: 0.9rem; }
+.bouton.lien, button.lien {
+    background: none; border: none; padding: 0; font: inherit; color: var(--primaire);
+    text-decoration: underline; cursor: pointer;
+}
+.bandeau-favoris {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--rayon);
+    padding: 10px 16px;
+    margin: 0 0 16px;
+}
+.nouveautes { border-left: 4px solid var(--succes); padding: 14px 20px; }
+.nouveautes h2 { font-size: 1.05rem; margin-bottom: 6px; }
+.nouveautes ul { margin: 0; padding-left: 20px; }
+.aide-favoris { font-size: 0.85rem; }
+
+/* --- Liste des établissements (fiches regroupées par lieu) */
+.groupe-lieu + .groupe-lieu { margin-top: 24px; }
+.titre-lieu { margin: 0 0 4px; font-size: 1.05rem; color: var(--primaire-fonce); }
+.description-lieu { margin: 0 0 8px; color: var(--texte-2); font-size: 0.9rem; }
+.fiches { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 8px; }
+.fiche {
+    border: 1px solid var(--bordure);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.fiche:focus { outline: none; }
+.fiche.favori { border-color: #f59e0b; box-shadow: 0 0 0 1px #f59e0b inset; }
+.fiche.incertain { opacity: 0.7; }
+.fiche.surligne { animation: surligne 2.2s ease-out; }
+@keyframes surligne { 0%, 40% { background: #e0e7ff; box-shadow: 0 0 0 3px var(--primaire); } 100% { background: var(--surface); } }
+.fiche p { margin: 0; }
+.fiche-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.fiche h3 { margin: 0; font-size: 1.05rem; }
+.etoile {
+    background: none; border: none; cursor: pointer; font-size: 1.4rem; line-height: 1;
+    color: #d97706; padding: 0 2px;
+}
+.etoile[aria-pressed="false"] { color: var(--texte-2); }
+.badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 1px 7px; border-radius: 999px;
+    background: var(--survol); color: var(--primaire-fonce); vertical-align: middle; margin-left: 2px;
+}
+.badge.nouveau { background: #d1fae5; color: #065f46; }
+.badge.attention { background: #fef3c7; color: #92400e; }
+.fiche .cuisine { color: var(--texte-2); }
+.fiche .lieu { font-size: 0.9rem; }
+.fiche .lieu.a-preciser { color: var(--texte-2); font-style: italic; }
+.fiche .infos span + span::before { content: ' · '; color: var(--texte-2); }
+.etiquettes { list-style: none; padding: 0; margin: 2px 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.etiquettes li { font-size: 0.78rem; background: #ecfdf5; color: #065f46; border-radius: 999px; padding: 1px 8px; }
+.fiche .paiements { font-size: 0.85rem; color: var(--texte-2); }
+.fiche .liens { display: flex; gap: 14px; margin-top: 4px; font-size: 0.92rem; }
+.fiche .liens a.secondaire { color: var(--texte-2); }
+.grille-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+/* --- Administration (3.1.0) */
+.contenu.large { max-width: 1400px; }
+.info-mode { background: var(--survol); border-radius: 8px; padding: 8px 12px; margin: -6px 0 12px; }
+.admin .tableau tr.statut-archive td { opacity: 0.55; }
+.admin .tableau tr.statut-incertain td:first-child { border-left: 3px solid var(--attention); }
+.admin select { padding: 8px 10px; }
+.admin .tableau button:disabled { cursor: not-allowed; }
+.espace-haut { margin-top: 16px; }
+.rupture { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; margin: 8px 0 0; }
+.limites { background: var(--surface-alt); }
+.limites h2 { font-size: 1.05rem; }
+.chiffre .libelle small { display: block; }
+
 /* --- Téléphone : le tableau public devient une liste de fiches */
 @media (max-width: 640px) {
     .entete { flex-direction: column; gap: 8px; }

@@ -32,15 +32,36 @@ const Commun = (() => {
         return Number.isNaN(n) ? Infinity : n;
     }
 
-    /** Envoie un évènement d'usage au serveur (statistiques). */
-    function journaliser(event) {
+    /** Texte sans accents ni majuscules (recherche). */
+    function simplifier(texte) {
+        return String(texte || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    /**
+     * Envoie un évènement d'usage typé au serveur (statistiques anonymes) : voir la liste des types
+     * acceptés dans src/audience.js. `cible` : identifiant d'établissement, jour, filtre…
+     */
+    function evenement(type, cible = '') {
         // keepalive : la requête aboutit même si la page change juste après (clic sur un lien)
-        fetch('/api/log', {
+        fetch('/api/evenements', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event }),
+            body: JSON.stringify({ type, cible: String(cible).slice(0, 80), page: location.pathname }),
             keepalive: true,
         }).catch(() => {});
+    }
+
+    /** Lecture / écriture dans le stockage du navigateur (sans erreur si indisponible). */
+    function lireLocal(cle, defaut) {
+        try {
+            const v = localStorage.getItem(cle);
+            return v === null ? defaut : JSON.parse(v);
+        } catch {
+            return defaut;
+        }
+    }
+    function ecrireLocal(cle, valeur) {
+        try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch { /* stockage plein ou désactivé */ }
     }
 
     /** Appel JSON ; lève une Error avec `details` si le serveur répond une erreur. */
@@ -96,5 +117,5 @@ const Commun = (() => {
 
     document.addEventListener('DOMContentLoaded', decorerPage);
 
-    return { html, urlSure, formaterPrix, prixMin, journaliser, api, config, notifier };
+    return { html, urlSure, formaterPrix, prixMin, simplifier, evenement, lireLocal, ecrireLocal, api, config, notifier };
 })();

@@ -19,45 +19,112 @@
         </nav>
         <p class="info-jour" id="infoJour" hidden></p>
 
-        <section class="carte" aria-live="polite">
-            <h2 id="titreResultat">Chargement…</h2>
-            <div class="tableau-conteneur">
-                <table id="tableFoodtrucks" class="tableau fiches" hidden>
-                    <thead>
-                        <tr>
-                            <th scope="col"><button type="button" class="tri" data-colonne="nom">Nom</button></th>
-                            <th scope="col"><button type="button" class="tri" data-colonne="cuisine">Cuisine</button></th>
-                            <th scope="col"><button type="button" class="tri" data-colonne="emplacement">Emplacement</button></th>
-                            <th scope="col"><button type="button" class="tri" data-colonne="prix">Prix</button></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+        <section class="carte outils" aria-label="Rechercher et filtrer">
+            <div class="ligne-outils">
+                <div class="champ recherche">
+                    <label for="recherche">Rechercher</label>
+                    <input type="search" id="recherche" placeholder="Nom, cuisine, lieu, végétarien…" autocomplete="off">
+                </div>
+                <div class="champ">
+                    <label for="filtreCategorie">Cuisine</label>
+                    <select id="filtreCategorie" data-filtre="categorie"><option value="">Toutes</option></select>
+                </div>
+                <div class="champ">
+                    <label for="filtrePrix">Prix maximum</label>
+                    <select id="filtrePrix" data-filtre="prixMax">
+                        <option value="">Tous les prix</option>
+                        <option value="8">8 € ou moins</option>
+                        <option value="10">10 € ou moins</option>
+                        <option value="12">12 € ou moins</option>
+                        <option value="15">15 € ou moins</option>
+                    </select>
+                </div>
+                <div class="champ">
+                    <label for="filtreType">Type</label>
+                    <select id="filtreType" data-filtre="type">
+                        <option value="">Foodtrucks et restaurants</option>
+                        <option value="foodtruck">Foodtrucks</option>
+                        <option value="restaurant">Restaurants</option>
+                    </select>
+                </div>
+            </div>
+            <details class="plus-filtres" id="plusFiltres">
+                <summary>Plus de filtres et tri</summary>
+                <div class="ligne-outils">
+                    <div class="champ">
+                        <label for="filtreEtiquette">Régime / particularité</label>
+                        <select id="filtreEtiquette" data-filtre="etiquette"><option value="">Indifférent</option></select>
+                    </div>
+                    <div class="champ">
+                        <label for="filtrePaiement">Moyen de paiement</label>
+                        <select id="filtrePaiement" data-filtre="paiement"><option value="">Indifférent</option></select>
+                    </div>
+                    <div class="champ">
+                        <label for="tri">Classer</label>
+                        <select id="tri">
+                            <option value="lieu">Par lieu</option>
+                            <option value="nom">Par nom</option>
+                            <option value="prix">Par prix</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+            <div class="ligne-boutons">
+                <button type="button" class="bouton" id="boutonHasard" title="Tire un établissement parmi les résultats affichés">🎲 Au hasard</button>
+                <button type="button" class="bouton secondaire" id="effacerFiltres" hidden>Effacer les filtres</button>
+                <span class="aide-filtres" id="etatFiltres" aria-live="polite"></span>
             </div>
         </section>
 
+        <p class="bandeau-favoris" id="bandeauFavoris" hidden></p>
+
+        <aside class="carte nouveautes" id="nouveautes" aria-labelledby="titreNouveautes" hidden>
+            <h2 id="titreNouveautes">Nouveaux cette semaine</h2>
+            <ul id="listeNouveautes"></ul>
+        </aside>
+
+        <section class="carte" aria-live="polite">
+            <h2 id="titreResultat">Chargement…</h2>
+            <div id="liste"></div>
+        </section>
+
         <section class="actions-bas">
-            <button type="button" id="boutonSuggerer" class="bouton">Suggérer un foodtruck</button>
+            <button type="button" id="boutonSuggerer" class="bouton">Suggérer un établissement</button>
             <p id="contact" hidden>
                 Vous voyez une erreur ou vous avez une remarque ?
                 <a id="lienMail" href="#">Envoyez-moi un mail</a>
             </p>
+            <p class="aide-favoris">Les favoris (☆) et les filtres sont gardés dans ce navigateur uniquement.</p>
         </section>
     </main>
 
     <footer class="pied">
+        <a href="/confidentialite.html" class="lien-discret">Données et confidentialité</a>
         <a href="/admin/" class="lien-discret">Espace administrateur</a>
         <span id="version"></span>
     </footer>
 
     <dialog id="modaleSuggestion" class="modale" aria-labelledby="titreSuggestion">
         <form id="formSuggestion" class="formulaire" novalidate>
-            <h2 id="titreSuggestion">Suggérer un foodtruck</h2>
+            <h2 id="titreSuggestion">Suggérer un établissement</h2>
             <p class="aide">Votre suggestion sera publiée après validation par un administrateur.</p>
 
             <div class="champ">
                 <label for="nom">Nom <span class="requis" aria-hidden="true">*</span></label>
                 <input type="text" id="nom" name="nom" required maxlength="80" placeholder="Ex : Moya">
+            </div>
+            <div class="grille-2">
+                <div class="champ">
+                    <label for="type">Type</label>
+                    <select id="type" name="type">
+                        <option value="foodtruck">Foodtruck</option>
+                        <option value="restaurant">Restaurant</option>
+                    </select>
+                </div>
+                <div class="champ">
+                    <label for="categorie">Catégorie</label>
+                    <select id="categorie" name="categorie"><option value="">(je ne sais pas)</option></select>
+                </div>
             </div>
             <div class="champ">
                 <label for="cuisine">Type de cuisine <span class="requis" aria-hidden="true">*</span></label>
@@ -67,15 +134,29 @@
                 <legend>Jours de présence <span class="requis" aria-hidden="true">*</span></legend>
                 <div class="cases-jours" id="casesJours"></div>
             </fieldset>
+            <div class="champ" id="champLieu" hidden>
+                <label for="lieu">Lieu (s'il est dans la liste)</label>
+                <select id="lieu" name="lieu"><option value="">(autre / je ne sais pas)</option></select>
+            </div>
             <div class="champ">
                 <label for="emplacement">Emplacement Google Maps <span class="requis" aria-hidden="true">*</span></label>
-                <input type="url" id="emplacement" name="emplacement" required placeholder="Ex : https://maps.app.goo.gl/NK8QJSaoFYfszxq68">
-                <small>Dans Google Maps : « Partager » puis « Copier le lien ».</small>
+                <input type="url" id="emplacement" name="emplacement" placeholder="Ex : https://maps.app.goo.gl/NK8QJSaoFYfszxq68">
+                <small>Dans Google Maps : « Partager » puis « Copier le lien ». Facultatif si vous avez choisi un lieu.</small>
             </div>
-            <div class="champ">
-                <label for="prix">Fourchette de prix (€)</label>
-                <input type="text" id="prix" name="prix" maxlength="30" placeholder="Ex : 10-14 ou 12">
+            <div class="grille-2">
+                <div class="champ">
+                    <label for="prix">Fourchette de prix (€)</label>
+                    <input type="text" id="prix" name="prix" maxlength="30" placeholder="Ex : 10-14 ou 12">
+                </div>
+                <div class="champ">
+                    <label for="horaires">Horaires</label>
+                    <input type="text" id="horaires" name="horaires" maxlength="60" placeholder="Ex : 11h30-14h">
+                </div>
             </div>
+            <fieldset class="champ">
+                <legend>Paiements acceptés</legend>
+                <div class="cases-jours" id="casesPaiements"></div>
+            </fieldset>
             <div class="champ">
                 <label for="site">Site web</label>
                 <input type="url" id="site" name="site" placeholder="Ex : https://www.exemple.fr">
