@@ -143,22 +143,23 @@ test('Agrégats : navigateurs actifs, nouveaux et récurrents, ancien calcul par
         const a = calculerAgregats(faits, techniques);
         const j = a.jours['2026-09-07'];
         assert.equal(j.actifs, 2); // v1, v3 (v4 = action d'administration)
-        assert.equal(j.nouveaux, 1); // v1 déjà vu en juin 2025
+        // v1 a été vu en juin 2025 mais plus depuis 13 mois : son empreinte est oubliée (son cookie a forcément expiré)
+        assert.equal(j.nouveaux, 2);
         assert.equal(j.pagesVues, 2);
         assert.deepEqual(j.joursConsultes, { Mardi: 1 });
-        assert.deepEqual(j.consultations, { abc: { site: 0, maps: 1, autres: 0 } });
+        assert.deepEqual(j.consultations, { abc: { fiche: 0, site: 0, maps: 1, autres: 0 } });
         assert.equal(j.heures[11], 1);
         assert.equal(j.heures[12], 1);
         assert.deepEqual(j.navigateurs, { Chrome: 2 });
         const s = a.semaines[semaine('2026-09-07').cle];
-        assert.deepEqual([s.actifs, s.nouveaux, s.recurrents], [2, 1, 1]);
+        assert.deepEqual([s.actifs, s.nouveaux], [2, 2]);
         assert.deepEqual([a.mois['2026-09'].actifs, a.mois['2026-10'].actifs, a.mois['2026-10'].nouveaux], [2, 2, 1]);
 
         const ancien = a.jours['2025-03-10'];
         assert.equal(ancien.actifs, 0);
         assert.equal(ancien.actifsIp, 2); // A et B (pas l'admin C, ni le robot R, ni Z)
         assert.equal(ancien.pagesVues, 1);
-        assert.deepEqual(ancien.consultations, { 'nom:Moya': { site: 0, maps: 0, autres: 1 } });
+        assert.deepEqual(ancien.consultations, { 'nom:Moya': { fiche: 0, site: 0, maps: 0, autres: 1 } });
         assert.equal(ancien.evenements.jour_ancien, 1);
         assert.deepEqual(ancien.joursConsultes, {}); // l'ancien « Jour sélectionné » mélangeait chargements et clics
         assert.deepEqual(ancien.technique, { requetes: 4, erreurs: 1, dureeTotaleMs: 6 });
@@ -178,7 +179,7 @@ test('Agrégats enregistrés = calcul brut, y compris après la purge des journa
     try {
         const stats = new Statistiques(e.stockage, { journal: SILENCE });
         const { faits, techniques } = await stats.lireFaits();
-        const brut = calculerAgregats(faits, techniques);
+        const brut = calculerAgregats(faits, techniques, AUJOURDHUI);
         const periodes = [[undefined, undefined], ['2025-03-01', '2025-03-31'], ['2026-09-07', '2026-10-13'], ['2025-06-02', '2025-06-02']];
         const attendus = periodes.map(([d, f]) => construireStatistiques(brut, d, f));
 

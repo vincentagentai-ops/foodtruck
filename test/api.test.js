@@ -132,7 +132,7 @@ test('Évènements : liste blanche, types réservés au serveur refusés, taille
     assert.equal((await t.appel('POST', '/api/evenements', { type: 'clic_maps', cible: 'abc', page: '/' })).statut, 204);
     assert.equal((await t.appel('POST', '/api/evenements', { type: 'inconnu' })).statut, 400);
     assert.equal((await t.appel('POST', '/api/evenements', {})).statut, 400);
-    for (const type of ['suggestion', 'admin_ajout', 'admin_validation', 'page_vue']) {
+    for (const type of ['suggestion', 'admin_ajout', 'admin_validation', 'admin_vu', 'page_vue', 'avis']) {
         assert.equal((await t.appel('POST', '/api/evenements', { type })).statut, 403, type);
     }
     assert.equal((await t.appel('POST', '/api/evenements', { type: 'recherche', cible: 'x'.repeat(3000) })).statut, 413);
@@ -145,7 +145,7 @@ test('Évènements : liste blanche, types réservés au serveur refusés, taille
     const types = lireUsage().map(e => e.type);
     assert.ok(types.includes('clic_maps'));
     assert.ok(types.includes('jour_ancien'));
-    assert.ok(!types.some(ty => ty.startsWith('admin_')));
+    assert.ok(!types.includes('admin_validation')); // libellé d'administration refusé (admin_vu : navigateur de l'admin, écrit par le serveur)
     const ev = lireUsage().find(e => e.type === 'clic_maps');
     assert.deepEqual(Object.keys(ev).sort(), ['cible', 'page', 'ts', 'type', 'v', 'version']);
 });

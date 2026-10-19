@@ -363,7 +363,10 @@
             recherche = e.target.value.trim();
             afficher();
             clearTimeout(minuterie);
-            if (recherche) minuterie = setTimeout(() => Commun.evenement('recherche', recherche.slice(0, 30)), 1200);
+            // Recherche sans résultat (parmi les établissements du jour affiché) : texte tronqué, pour repérer des manques
+            if (recherche) {
+                minuterie = setTimeout(() => Commun.evenement(resultats.length ? 'recherche' : 'recherche_vide', recherche.slice(0, 30)), 1200);
+            }
         });
         document.getElementById('effacerFiltres').addEventListener('click', () => {
             filtres = { ...FILTRES_VIDES };

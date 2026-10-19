@@ -17,6 +17,7 @@ const TYPES_PUBLICS = [
     'chargement', // affichage initial de la liste (cible : jour affiché)
     'jour_clic', // clic sur un bouton de jour (cible : jour)
     'recherche', // recherche texte (cible : texte tronqué)
+    'recherche_vide', // recherche sans résultat (cible : texte tronqué à 30 caractères)
     'filtre', // changement de filtre (cible : « nom=valeur »)
     'filtres_effaces',
     'tri', // cible : critère
@@ -41,7 +42,8 @@ const TYPES_SERVEUR = ['page_vue', 'suggestion', 'admin_ajout', 'admin_modificat
     'admin_validation', 'admin_rejet', 'admin_lieu', 'ancien', 'jour_ancien', 'consultation_ancien',
     'ajout', 'modification', 'restauration', 'retrait', 'avis', 'avis_modifie', 'avis_supprime', 'presence',
     'signalement', 'avis_masque_auto', 'statut_auto', 'admin_fusion', 'admin_moderation', 'admin_restauration',
-    'admin_blocage', 'admin_seuils', 'admin_purge'];
+    'admin_blocage', 'admin_seuils', 'admin_purge',
+    'admin_vu']; // navigateur de l'administrateur (exclu de l'audience à partir de ce jour)
 
 const CHEMINS_PUBLICS = ['/index.html', '/confidentialite.html'];
 

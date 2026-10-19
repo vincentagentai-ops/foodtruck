@@ -13,7 +13,7 @@ const {
 const { COLONNES, depuisFoodtrucks, depuisLieux, depuisObjets } = require('./csv');
 const audience = require('./audience');
 const identite = require('./identite');
-const { Statistiques } = require('./statistiques');
+const { Statistiques, statistiquesContributeurs, dateLocale, TYPES_CONTRIBUTION } = require('./statistiques');
 const { Limiteur, limiter } = require('./limites');
 const { Etablissements, CHAMPS_FACTUELS, LIBELLES_CHAMPS, chercherDoublons, champsModifies } = require('./etablissements');
 const { Contributions, CRITERES, TYPES_SIGNALEMENT } = require('./contributions');
@@ -169,6 +169,14 @@ function creerApplication(config, options = {}) {
     const limiteContributions = limiter(new Limiteur({ max: config.limites.contributions }), clesLimite);
     const limiteEvenements = limiter(new Limiteur({ max: config.limites.evenements }), clesLimite);
 
+    // Navigateur de l'administrateur : noté une fois par démarrage (évènement admin_vu) pour être exclu de l'audience
+    const navigateursAdmin = new Set();
+    function noterNavigateurAdmin(req) {
+        if (!req.idNavigateur || navigateursAdmin.has(req.idNavigateur)) return;
+        navigateursAdmin.add(req.idNavigateur);
+        evenement(req, 'admin_vu');
+    }
+
     // --- Authentification de l'espace administrateur (HTTP Basic)
     function egalSecurise(a, b) {
         const ha = crypto.createHash('sha256').update(String(a)).digest();
@@ -188,6 +196,7 @@ function creerApplication(config, options = {}) {
             const motDePasse = texte.slice(sep + 1);
             if (sep > 0 && egalSecurise(utilisateur, config.admin.utilisateur)
                 && egalSecurise(motDePasse, config.admin.motDePasse)) {
+                noterNavigateurAdmin(req);
                 return next();
             }
         }
@@ -433,6 +442,7 @@ function creerApplication(config, options = {}) {
     app.post('/api/evenements', limiteEvenements, (req, res) => {
         const { evenement: ev, statut, erreur } = audience.validerEvenement(req.body);
         if (!ev) return res.status(statut).json({ error: erreur });
+        if (audience.estRobot(req.headers['user-agent'])) return res.status(204).end(); // robots : non comptés
         evenement(req, ev.type, ev.cible, ev.page);
         res.status(204).end();
     });
@@ -443,7 +453,7 @@ function creerApplication(config, options = {}) {
         if (!event) return res.status(400).json({ error: 'Champ "event" manquant.' });
         if (!audience.ancienLibelleAccepte(event)) return res.status(403).json({ error: "Libellé réservé au serveur." });
         const ev = audience.convertirAncienLibelle(event, { recu: true });
-        if (ev) evenement(req, ev.type, ev.cible);
+        if (ev && !audience.estRobot(req.headers['user-agent'])) evenement(req, ev.type, ev.cible);
         res.status(204).end();
     });
 
@@ -651,12 +661,103 @@ function creerApplication(config, options = {}) {
         res.attachment('lieux.csv').type('text/csv; charset=utf-8').send(depuisLieux(await stockage.lireLieux(), { export: true }));
     }));
 
-    app.get('/api/admin/statistiques', route(async (req, res) => {
-        const dateValide = d => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : undefined);
-        const r = await statistiques.calculer(dateValide(req.query.debut), dateValide(req.query.fin));
-        const noms = Object.fromEntries((await stockage.lireFoodtrucks()).map(ft => [ft.id, ft.nom]));
+    // --- Statistiques (S4/S5) : agrégats d'audience + contributions, sans aucun identifiant dans les réponses
+    const dateValide = d => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : undefined);
+    const estJeton = a => typeof a === 'string' && /^[0-9a-f]{24}$/.test(a); // ni « admin » ni « systeme »
+
+    /** Activités des contributeurs [{date, auteur}] (jeton d'auteur, utilisé pour compter, jamais renvoyé). */
+    async function activitesContributeurs() {
+        const activites = [];
+        const ajouter = (ts, auteur) => {
+            const date = estJeton(auteur) && dateLocale(ts);
+            if (date) activites.push({ date, auteur });
+        };
+        const lignes = async fichier => (await stockage.lireLignes(fichier)).lignes;
+        for (const l of await lignes(contributions.fichiers.avis)) if (l && ['creer', 'modifier', 'supprimer'].includes(l.action)) ajouter(l.ts, l.auteur);
+        for (const l of await lignes(contributions.fichiers.presences)) if (l) ajouter(l.ts, l.auteur);
+        for (const l of await lignes(contributions.fichiers.signalements)) if (l && l.action === 'signaler') ajouter(l.ts, l.auteur);
+        for (const e of await etablissements.historique()) if (e) ajouter(e.ts, e.auteur);
+        return activites;
+    }
+
+    /** Confirmations « Il est là » par établissement sur la période (présences brutes + agrégats des présences purgées). */
+    async function confirmations(etat, debut, fin) {
+        const dans = d => (!debut || d >= debut) && (!fin || d <= fin);
+        const parCible = {};
+        for (const [cle, declarations] of etat.presences) {
+            const [date, cible] = cle.split('|');
+            if (!dans(date)) continue;
+            for (const { etat: e } of declarations.values()) if (e === 'present') parCible[cible] = (parCible[cible] || 0) + 1;
+        }
+        const purgees = await stockage.lireJSON(contributions.fichiers.agregatsPresences, null).catch(() => null);
+        for (const [date, cibles] of Object.entries((purgees && purgees.jours) || {})) {
+            if (!dans(date)) continue;
+            for (const [cible, c] of Object.entries(cibles)) {
+                const id = etat.alias[cible] || cible;
+                parCible[id] = (parCible[id] || 0) + (c.present || 0);
+            }
+        }
+        return parCible;
+    }
+
+    async function statistiquesCompletes(debut, fin) {
+        const aujourdhui = dateLocale(horloge());
+        const r = await statistiques.calculer(debut, fin, aujourdhui);
+        const [etat, activites, fiches] = await Promise.all([contributions.etat(), activitesContributeurs(), stockage.lireFoodtrucks()]);
+        const noms = Object.fromEntries(fiches.map(ft => [ft.id, ft.nom]));
         r.noms = noms; // pour afficher les établissements consultés par leur nom
-        res.json(r);
+        r.contributeurs = statistiquesContributeurs(activites, debut, fin, aujourdhui);
+        if (r.periode.precedente) {
+            const p = r.periode.precedente;
+            r.precedente.contributeurs = statistiquesContributeurs(activites, p.debut, p.fin, aujourdhui).contributeurs;
+        }
+        r.tuiles.contributeurs = r.contributeurs.contributeurs;
+
+        // Tableau par établissement : consultations (période), confirmations de présence (période), avis et note (actuels)
+        const presents = await confirmations(etat, debut, fin);
+        const ids = new Set([...fiches.map(ft => ft.id), ...Object.keys(r.consultations).filter(k => !k.startsWith('nom:')), ...Object.keys(presents)]);
+        r.etablissements = [...ids].map(id => {
+            const c = r.consultations[id] || { fiche: 0, site: 0, maps: 0 };
+            const resume = contributions.resume(etat, id, null);
+            return {
+                id, nom: noms[id] || `(supprimé : ${id})`, fiche: c.fiche, site: c.site, maps: c.maps,
+                confirmations: presents[id] || 0, avis: resume.nbAvis, note: resume.nbAvis >= 3 ? resume.note : null,
+            };
+        }).filter(e => e.fiche || e.site || e.maps || e.confirmations || e.avis || noms[e.id])
+            .sort((a, b) => (b.fiche + b.site + b.maps) - (a.fiche + a.site + a.maps) || b.confirmations - a.confirmations || (a.nom < b.nom ? -1 : 1));
+        return r;
+    }
+
+    app.get('/api/admin/statistiques', route(async (req, res) => {
+        res.json(await statistiquesCompletes(dateValide(req.query.debut), dateValide(req.query.fin)));
+    }));
+
+    // Export CSV des agrégats (aucun identifiant) : par jour, par semaine ou par établissement
+    app.get('/api/admin/export/statistiques.csv', route(async (req, res) => {
+        const niveau = ['jours', 'semaines', 'etablissements'].includes(req.query.niveau) ? req.query.niveau : 'jours';
+        const r = await statistiquesCompletes(dateValide(req.query.debut), dateValide(req.query.fin));
+        let lignes;
+        let colonnes;
+        if (niveau === 'jours') {
+            colonnes = ['date', 'navigateurs_actifs', 'navigateurs_actifs_7_jours', 'nouveaux_navigateurs', 'visites', 'pages_vues', 'contributions', 'adresses_ip_ancien_calcul'];
+            lignes = r.jours.map(j => ({ date: j.date, navigateurs_actifs: j.actifs, navigateurs_actifs_7_jours: j.actifs7j,
+                nouveaux_navigateurs: j.nouveaux, visites: j.visites, pages_vues: j.pagesVues, contributions: j.contributions,
+                adresses_ip_ancien_calcul: j.actifsIp }));
+        } else if (niveau === 'semaines') {
+            colonnes = ['semaine', 'debut', 'fin', 'navigateurs_actifs', 'nouveaux', 'recurrents', 'retour_s1_pourcent', 'contributeurs',
+                ...TYPES_CONTRIBUTION, 'complete'];
+            lignes = r.semaines.map(s => ({ semaine: s.semaine, debut: s.debut, fin: s.fin, navigateurs_actifs: s.actifs, nouveaux: s.nouveaux,
+                recurrents: s.recurrents, retour_s1_pourcent: s.retourS1 == null ? '' : s.retourS1,
+                contributeurs: r.contributeurs.parSemaine[s.semaine] || 0,
+                ...Object.fromEntries(TYPES_CONTRIBUTION.map(t => [t, s.contributions[t] || 0])), complete: s.complete ? 'oui' : 'non' }));
+        } else {
+            colonnes = ['etablissement', 'fiches_ouvertes', 'clics_site', 'clics_maps', 'confirmations_presence', 'avis', 'note'];
+            lignes = r.etablissements.map(e => ({ etablissement: e.nom, fiches_ouvertes: e.fiche, clics_site: e.site, clics_maps: e.maps,
+                confirmations_presence: e.confirmations, avis: e.avis, note: e.note == null ? '' : e.note }));
+        }
+        const suffixe = [r.periode.debut, r.periode.fin].filter(Boolean).join('_');
+        res.attachment(`statistiques-${niveau}${suffixe ? `-${suffixe}` : ''}.csv`).type('text/csv; charset=utf-8')
+            .send(depuisObjets(lignes, colonnes, { export: true }));
     }));
 
     // --- 404 et erreurs
