@@ -104,6 +104,18 @@ class Stockage {
         }
     }
 
+    /** Comme ecrireTexte, pour un contenu binaire (image du plan). */
+    async ecrireOctets(fichier, octets) {
+        const temporaire = `${fichier}.${process.pid}.tmp`;
+        await fs.writeFile(temporaire, octets);
+        try {
+            await renommerAvecReessais(temporaire, fichier);
+        } catch (err) {
+            await fs.rm(temporaire, { force: true });
+            throw err;
+        }
+    }
+
     async lireFichier(fichier) {
         const texte = await this.lireTexte(fichier);
         return texte === null ? [] : versFoodtrucks(texte);

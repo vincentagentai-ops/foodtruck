@@ -35,6 +35,18 @@ const TYPES_PUBLICS = [
     'modification_ouverte', // formulaire « Modifier les infos » ouvert (cible : id)
     'doublon_vu', // avertissement de doublon affiché (cible : id de la fiche ressemblante)
     'quoi_de_neuf_clic', // clic dans le fil « Quoi de neuf » (cible : id)
+    // 3.4.0 : confort (les données personnelles restent dans le navigateur ; seul l'usage est compté)
+    'vue_semaine', // vue semaine affichée
+    'marque_essaye', 'marque_a_tester', 'marque_retiree', // marques « Déjà essayé » / « À tester » (cible : id)
+    'hasard_non_essaye', // « Au hasard » avec l'option « que je n'ai pas essayé » (cible : id tiré)
+    'copie_teams', // bouton « Copier pour Teams » (cible : id)
+    'lien_ouvert', // arrivée par un lien partagé (cible : « fiche », « filtres » ou « jour »)
+    'preferences', // préférences alimentaires (cible : « enregistrees », « effacees », « privilegier »)
+    'carnet_ajout', 'carnet_retrait', // « J'y ai mangé aujourd'hui » (cible : id)
+    'carnet_ouvert', 'carnet_efface',
+    'plan_ouvert', // plan des emplacements déplié
+    'plan_lieu_clic', // clic sur un lieu du plan (cible : id du lieu)
+    'donnees_locales_effacees', // « Effacer les données de ce navigateur » (page confidentialité)
 ];
 // Évènements écrits uniquement par le serveur (refusés s'ils viennent d'une page)
 // (les contributions sont journalisées sans identifiant de navigateur : elles ne sont pas reliables à l'audience)
@@ -42,7 +54,7 @@ const TYPES_SERVEUR = ['page_vue', 'suggestion', 'admin_ajout', 'admin_modificat
     'admin_validation', 'admin_rejet', 'admin_lieu', 'ancien', 'jour_ancien', 'consultation_ancien',
     'ajout', 'modification', 'restauration', 'retrait', 'avis', 'avis_modifie', 'avis_supprime', 'presence',
     'signalement', 'avis_masque_auto', 'statut_auto', 'admin_fusion', 'admin_moderation', 'admin_restauration',
-    'admin_blocage', 'admin_seuils', 'admin_purge',
+    'admin_blocage', 'admin_seuils', 'admin_purge', 'admin_plan',
     'admin_vu']; // navigateur de l'administrateur (exclu de l'audience à partir de ce jour)
 
 const CHEMINS_PUBLICS = ['/index.html', '/confidentialite.html'];

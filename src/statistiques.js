@@ -38,7 +38,7 @@ const FONCTIONNALITES = {
     filtres: ['filtre', 'filtres_effaces'],
     tri: ['tri'],
     jour: ['jour_clic'],
-    hasard: ['hasard'],
+    hasard: ['hasard', 'hasard_non_essaye'],
     favoris: ['favori_ajout', 'favori_retrait'],
     fiche: ['fiche_ouverte'],
     historique: ['historique_ouvert'],
@@ -47,6 +47,14 @@ const FONCTIONNALITES = {
     site: ['clic_site'],
     ajout: ['ajout_ouvert'],
     modification: ['modification_ouverte'],
+    // 3.4.0
+    semaine: ['vue_semaine'],
+    essais: ['marque_essaye', 'marque_a_tester', 'marque_retiree'],
+    teams: ['copie_teams'],
+    lien: ['lien_ouvert'],
+    preferences: ['preferences'],
+    carnet: ['carnet_ajout', 'carnet_retrait', 'carnet_ouvert', 'carnet_efface'],
+    plan: ['plan_ouvert', 'plan_lieu_clic'],
 };
 // Contributions comptées par le serveur (sans identifiant de navigateur)
 const TYPES_CONTRIBUTION = ['suggestion', 'ajout', 'modification', 'restauration', 'avis', 'avis_modifie', 'presence', 'signalement'];

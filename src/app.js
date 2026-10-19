@@ -17,6 +17,7 @@ const { Statistiques, statistiquesContributeurs, dateLocale, TYPES_CONTRIBUTION 
 const { Limiteur, limiter } = require('./limites');
 const { Etablissements, CHAMPS_FACTUELS, LIBELLES_CHAMPS, chercherDoublons, champsModifies } = require('./etablissements');
 const { Contributions, CRITERES, TYPES_SIGNALEMENT } = require('./contributions');
+const { Plan, validerImage, validerPosition, TAILLE_MAX } = require('./plan');
 const { version } = require('../package.json');
 
 const DOSSIER_PUBLIC = path.join(__dirname, '..', 'public');
@@ -52,6 +53,7 @@ function creerApplication(config, options = {}) {
     let contributions;
     const etablissements = new Etablissements(stockage, { horloge, journal, moderation: () => contributions.seuils() });
     contributions = new Contributions(stockage, etablissements, { horloge });
+    const plan = new Plan(stockage);
     const app = express();
     let transporteur = options.transporteur || null;
     if (!transporteur && config.mail.hote) {
@@ -92,9 +94,12 @@ function creerApplication(config, options = {}) {
         next();
     });
 
-    // Évènements d'usage : corps limité à 2 ko (le reste de l'API : 20 ko)
+    // Évènements d'usage : corps limité à 2 ko ; image du plan : lue par sa route, après le mot de passe
+    // administrateur (voir plus bas) ; le reste de l'API : 20 ko
+    const ADRESSE_IMAGE_PLAN = '/api/admin/plan/image';
     app.use(['/api/evenements', '/api/log'], express.json({ limit: '2kb' }));
-    app.use(express.json({ limit: '20kb' }));
+    const json20ko = express.json({ limit: '20kb' });
+    app.use((req, res, next) => (req.path === ADRESSE_IMAGE_PLAN ? next() : json20ko(req, res, next)));
 
     const ipDe = req => req.ip || req.socket.remoteAddress;
 
@@ -250,6 +255,24 @@ function creerApplication(config, options = {}) {
 
     app.get('/api/lieux', route(async (req, res) => {
         res.json(await stockage.lireLieux());
+    }));
+
+    // U15 : plan local des emplacements (image déposée par l'administrateur + position de chaque lieu)
+    app.get('/api/plan', route(async (req, res) => {
+        res.json(await plan.public());
+    }));
+
+    // L'image n'est jamais interprétée : type exact vérifié sur ses octets, « nosniff », CSP sandbox sans aucune source
+    app.get('/plan/image', route(async (req, res) => {
+        const image = await plan.fichierImage();
+        if (!image) return res.status(404).sendFile(path.join(DOSSIER_PUBLIC, '404.html'));
+        res.set({
+            'Content-Type': image.type,
+            'Content-Disposition': `inline; filename="plan.${image.type.split('/')[1]}"`,
+            'Content-Security-Policy': "default-src 'none'; sandbox",
+            'Cache-Control': 'no-cache',
+        });
+        res.send(image.octets);
     }));
 
     /** Liste publique enrichie : note, présence du jour, fermetures, signalements « plus présent ». */
@@ -644,6 +667,34 @@ function creerApplication(config, options = {}) {
         res.json({ message: `Lieu « ${lieu.nom} » modifié.` });
     }));
 
+    // Plan des emplacements : dépôt de l'image (JSON { type, donnees en base64 }, 3 Mo au plus) et positions des lieux
+    const jsonImage = express.json({ limit: `${Math.ceil(TAILLE_MAX * 4 / 3 / 1024) + 16}kb` });
+    app.put(ADRESSE_IMAGE_PLAN, jsonImage, route(async (req, res) => {
+        const image = await plan.enregistrerImage(validerImage(req.body));
+        evenement(req, 'admin_plan', 'image');
+        res.status(201).json({ message: `Plan enregistré (${Math.ceil(image.taille / 1024)} Ko).`, plan: await plan.public() });
+    }));
+
+    app.delete(ADRESSE_IMAGE_PLAN, route(async (req, res) => {
+        await plan.supprimerImage();
+        evenement(req, 'admin_plan', 'image');
+        res.json({ message: 'Plan retiré (les positions des lieux sont gardées).', plan: await plan.public() });
+    }));
+
+    app.put('/api/admin/plan/positions/:lieu', route(async (req, res) => {
+        const position = validerPosition(req.body);
+        if (!(await stockage.lireLieux()).some(l => l.id === req.params.lieu)) throw new ErreurHttp(404, 'Lieu introuvable.');
+        await plan.placer(req.params.lieu, position);
+        evenement(req, 'admin_plan', req.params.lieu);
+        res.json({ message: 'Lieu placé sur le plan.', plan: await plan.public() });
+    }));
+
+    app.delete('/api/admin/plan/positions/:lieu', route(async (req, res) => {
+        await plan.placer(req.params.lieu, null);
+        evenement(req, 'admin_plan', req.params.lieu);
+        res.json({ message: 'Lieu retiré du plan.', plan: await plan.public() });
+    }));
+
     app.delete('/api/admin/lieux/:id', route(async (req, res) => {
         const utilise = (await stockage.lireFoodtrucks())
             .filter(ft => ft.lieu === req.params.id || String(ft.lieux_jours || '').split(';').some(m => m.split('=')[1] === req.params.id));
@@ -654,6 +705,7 @@ function creerApplication(config, options = {}) {
             if (!lieux.some(l => l.id === req.params.id)) throw new ErreurHttp(404, 'Lieu introuvable.');
             return lieux.filter(l => l.id !== req.params.id);
         });
+        await plan.placer(req.params.id, null);
         evenement(req, 'admin_lieu', req.params.id);
         res.json({ message: 'Lieu supprimé.' });
     }));
@@ -777,6 +829,7 @@ function creerApplication(config, options = {}) {
     app.locals.statistiques = statistiques;
     app.locals.etablissements = etablissements;
     app.locals.contributions = contributions;
+    app.locals.plan = plan;
     return app;
 }
 

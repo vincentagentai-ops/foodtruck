@@ -31,6 +31,13 @@
         historique: 'Historique d\'une fiche',
         ajout: "Formulaire d'ajout",
         modification: 'Formulaire de modification',
+        semaine: 'Vue semaine',
+        essais: '« Déjà essayé » / « À tester »',
+        teams: '« Copier pour Teams »',
+        lien: 'Arrivée par un lien partagé',
+        preferences: 'Préférences alimentaires',
+        carnet: 'Carnet « J\'y ai mangé »',
+        plan: 'Plan des emplacements',
     };
     const LIBELLES = {
         page_vue: 'Page vue',
@@ -85,6 +92,22 @@
         admin_blocage: 'Admin : blocage / déblocage',
         admin_seuils: 'Admin : seuils modifiés',
         admin_purge: 'Admin : suppression définitive d\'un avis',
+        admin_plan: 'Admin : plan des emplacements modifié',
+        vue_semaine: 'Vue semaine affichée',
+        marque_essaye: 'Marqué « Déjà essayé »',
+        marque_a_tester: 'Marqué « À tester »',
+        marque_retiree: 'Marque « essayé / à tester » retirée',
+        hasard_non_essaye: '« Au hasard » (que je n\'ai pas essayé)',
+        copie_teams: '« Copier pour Teams »',
+        lien_ouvert: 'Arrivée par un lien partagé',
+        preferences: 'Préférences alimentaires modifiées',
+        carnet_ajout: '« J\'y ai mangé aujourd\'hui »',
+        carnet_retrait: 'Repas retiré du carnet',
+        carnet_ouvert: 'Carnet consulté',
+        carnet_efface: 'Carnet effacé',
+        plan_ouvert: 'Plan des emplacements déplié',
+        plan_lieu_clic: 'Clic sur un lieu du plan',
+        donnees_locales_effacees: 'Données du navigateur effacées',
     };
 
     // --- Outils
