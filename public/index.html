@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Trucks Basso Cambo</title>
+    <link rel="icon" href="/img/logo.png" type="image/png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header class="entete">
+        <img src="/img/logo.png" alt="" class="logo">
+        <h1>Qu'est-ce que je veux manger aujourd'hui ?</h1>
+    </header>
+
+    <main class="contenu">
+        <nav class="jours" id="jours" aria-label="Choisir le jour">
+            <!-- Boutons Lundi à Vendredi générés par accueil.js -->
+        </nav>
+        <p class="info-jour" id="infoJour" hidden></p>
+
+        <section class="carte" aria-live="polite">
+            <h2 id="titreResultat">Chargement…</h2>
+            <div class="tableau-conteneur">
+                <table id="tableFoodtrucks" class="tableau fiches" hidden>
+                    <thead>
+                        <tr>
+                            <th scope="col"><button type="button" class="tri" data-colonne="nom">Nom</button></th>
+                            <th scope="col"><button type="button" class="tri" data-colonne="cuisine">Cuisine</button></th>
+                            <th scope="col"><button type="button" class="tri" data-colonne="emplacement">Emplacement</button></th>
+                            <th scope="col"><button type="button" class="tri" data-colonne="prix">Prix</button></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="actions-bas">
+            <button type="button" id="boutonSuggerer" class="bouton">Suggérer un foodtruck</button>
+            <p id="contact" hidden>
+                Vous voyez une erreur ou vous avez une remarque ?
+                <a id="lienMail" href="#">Envoyez-moi un mail</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="pied">
+        <a href="/admin/" class="lien-discret">Espace administrateur</a>
+        <span id="version"></span>
+    </footer>
+
+    <dialog id="modaleSuggestion" class="modale" aria-labelledby="titreSuggestion">
+        <form id="formSuggestion" class="formulaire" novalidate>
+            <h2 id="titreSuggestion">Suggérer un foodtruck</h2>
+            <p class="aide">Votre suggestion sera publiée après validation par un administrateur.</p>
+
+            <div class="champ">
+                <label for="nom">Nom <span class="requis" aria-hidden="true">*</span></label>
+                <input type="text" id="nom" name="nom" required maxlength="80" placeholder="Ex : Moya">
+            </div>
+            <div class="champ">
+                <label for="cuisine">Type de cuisine <span class="requis" aria-hidden="true">*</span></label>
+                <input type="text" id="cuisine" name="cuisine" required maxlength="80" placeholder="Ex : Mexicain">
+            </div>
+            <fieldset class="champ">
+                <legend>Jours de présence <span class="requis" aria-hidden="true">*</span></legend>
+                <div class="cases-jours" id="casesJours"></div>
+            </fieldset>
+            <div class="champ">
+                <label for="emplacement">Emplacement Google Maps <span class="requis" aria-hidden="true">*</span></label>
+                <input type="url" id="emplacement" name="emplacement" required placeholder="Ex : https://maps.app.goo.gl/NK8QJSaoFYfszxq68">
+                <small>Dans Google Maps : « Partager » puis « Copier le lien ».</small>
+            </div>
+            <div class="champ">
+                <label for="prix">Fourchette de prix (€)</label>
+                <input type="text" id="prix" name="prix" maxlength="30" placeholder="Ex : 10-14 ou 12">
+            </div>
+            <div class="champ">
+                <label for="site">Site web</label>
+                <input type="url" id="site" name="site" placeholder="Ex : https://www.exemple.fr">
+            </div>
+
+            <ul class="erreurs" id="erreursSuggestion" hidden></ul>
+
+            <div class="boutons-modale">
+                <button type="button" class="bouton secondaire" id="annulerSuggestion">Annuler</button>
+                <button type="submit" class="bouton">Envoyer</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="/js/commun.js"></script>
+    <script src="/js/accueil.js"></script>
+</body>
+</html>

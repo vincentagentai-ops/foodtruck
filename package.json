@@ -1,0 +1,22 @@
+{
+  "name": "foodtruck",
+  "version": "3.0.0",
+  "description": "Liste des food trucks autour du travail (Basso Cambo) : consultation par jour, suggestions, administration et statistiques.",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "author": "Vincent",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "express": "^4.22.3",
+    "nodemailer": "^10.1.7"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+# Données d'exploitation (contiennent des adresses IP) : jamais dans git
+data/
+.env
+*.tmp
+npm-debug.log*
+livraisons/
