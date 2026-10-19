@@ -2,6 +2,8 @@
 
 // Migration automatique des données au démarrage (3.0.0 -> 3.1.0 -> 3.2.0).
 // 3.2.0 : colonne lieux_jours ajoutée (vide) en fin de foodtrucks.csv.
+// 3.5.0 : colonnes photo et fidelite ajoutées en fin ; la photo est remplie une fois avec la photo d'origine du site
+//   (public/img/etablissements, retrouvée par le nom de l'établissement), ensuite modifiable par tous.
 // - foodtrucks.csv : ajout des colonnes id, type, categorie, etiquettes, lieu, horaires, paiements, statut,
 //   cree_le, maj_le, version ; un identifiant stable est attribué à chaque ligne (aucune ligne fusionnée).
 // - foodtruckAValider.csv : réécrit au nouveau format (colonnes vides).
@@ -13,6 +15,8 @@ const path = require('path');
 const { COLONNES, COLONNES_LIEUX, enteteComplete, versFoodtrucks } = require('./csv');
 const { CATEGORIES, TYPES, STATUTS, categorieDepuisCuisine } = require('./validation');
 const { nouvelId } = require('./stockage');
+const { chargerImages } = require('./photos');
+const { cle } = require('./validation');
 
 function horodatage(date = new Date()) {
     const p = n => String(n).padStart(2, '0');
@@ -58,12 +62,16 @@ async function migrerDonnees(stockage) {
         if (aMigrer(texte, liste)) {
             resultat.copies.push(await copieDeSecurite(config.fichierFoodtrucks));
             const ids = liste.map(ft => ft.id).filter(Boolean);
+            // Colonne photo absente : photos d'origine attribuées d'après le nom
+            const photos = enteteComplete(texte, ['photo']) ? null : chargerImages();
             // Identifiants en double (copier-coller dans Excel) : la deuxième ligne reçoit un nouvel identifiant
             const vus = new Set();
             const lignes = liste.map(ft => {
                 if (ft.id && vus.has(ft.id)) ft = { ...ft, id: '' };
                 if (ft.id) vus.add(ft.id);
-                return completerLigne(ft, ids);
+                const ligne = completerLigne(ft, ids);
+                if (photos && !ligne.photo) ligne.photo = photos.get(cle(ligne.nom)) || '';
+                return ligne;
             });
             await stockage.ecrireFichier(config.fichierFoodtrucks, lignes);
             resultat.migre = true;

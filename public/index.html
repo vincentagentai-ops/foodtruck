@@ -21,6 +21,8 @@
         <p class="info-jour" id="infoJour" hidden></p>
 
         <section class="carte outils" aria-label="Rechercher et filtrer">
+            <details id="outilsRecherche">
+            <summary>🔍 Rechercher et filtrer</summary>
             <div class="ligne-outils">
                 <div class="champ recherche">
                     <label for="recherche">Rechercher</label>
@@ -92,6 +94,7 @@
                 </fieldset>
                 <p class="aide-petite">Gardé dans ce navigateur uniquement.</p>
             </details>
+            </details>
             <div class="ligne-boutons">
                 <button type="button" class="bouton" id="boutonHasard">🎲 Au hasard</button>
                 <label class="case"><input type="checkbox" id="hasardNonEssaye"> que je n'ai pas essayé</label>
@@ -108,21 +111,26 @@
             <ul id="listeNouveautes"></ul>
         </aside>
 
-        <details class="carte plan" id="plan" hidden>
-            <summary>Plan des emplacements <small id="resumePlan"></small></summary>
-            <div class="plan-conteneur">
-                <div class="plan-cadre" id="planCadre">
-                    <img id="planImage" alt="Plan du quartier avec les lieux du jour numérotés">
+        <div class="disposition" id="disposition">
+            <section class="carte plan" id="plan" aria-labelledby="titrePlan" hidden>
+                <div class="tete-plan">
+                    <h2 id="titrePlan">Plan des emplacements <small id="resumePlan"></small></h2>
+                    <button type="button" class="bouton secondaire petit" id="agrandirPlan" aria-pressed="false" aria-controls="plan">⤢ Agrandir</button>
                 </div>
-                <ol class="legende-plan" id="legendePlan"></ol>
-            </div>
-            <p class="aide-petite">Plan servi par le site (sans Internet). Les liens Google Maps des fiches restent disponibles.</p>
-        </details>
+                <div class="plan-conteneur">
+                    <div class="plan-cadre" id="planCadre" title="Cliquer pour agrandir le plan">
+                        <img id="planImage" alt="Plan du quartier avec les lieux du jour numérotés">
+                    </div>
+                    <ol class="legende-plan" id="legendePlan"></ol>
+                </div>
+                <p class="aide-petite">Plan servi par le site (sans Internet). Les liens Google Maps des fiches restent disponibles.</p>
+            </section>
 
-        <section class="carte" aria-live="polite">
-            <h2 id="titreResultat" tabindex="-1">Chargement…</h2>
-            <div id="liste"></div>
-        </section>
+            <section class="carte resultats" aria-live="polite">
+                <h2 id="titreResultat" tabindex="-1">Chargement…</h2>
+                <div id="liste"></div>
+            </section>
+        </div>
 
         <section class="actions-bas">
             <button type="button" id="boutonAjouter" class="bouton">+ Ajouter un établissement</button>
@@ -228,6 +236,20 @@
             <div class="champ">
                 <label for="site">Site web ou menu</label>
                 <input type="url" id="site" name="site" placeholder="Ex : https://www.exemple.fr">
+            </div>
+            <fieldset class="champ champ-photo">
+                <legend>Photo</legend>
+                <div class="apercu-photo" id="apercuPhoto"><span class="aide-petite">Aucune photo</span></div>
+                <input type="hidden" name="photo">
+                <div class="ligne-boutons ligne-serree">
+                    <label class="bouton secondaire petit" for="fichierPhoto">Choisir une photo…</label>
+                    <input type="file" id="fichierPhoto" class="visuellement-cache" accept="image/jpeg,image/png,image/webp">
+                    <button type="button" class="bouton secondaire petit" id="retirerPhoto" hidden>Retirer la photo</button>
+                </div>
+                <small id="etatPhoto" role="status">JPEG, PNG ou WebP : la photo est réduite avant l'envoi. De préférence le camion ou un plat.</small>
+            </fieldset>
+            <div class="champ">
+                <label class="case"><input type="checkbox" id="fidelite" name="fidelite" value="oui"> Propose une carte de fidélité</label>
             </div>
             <div class="champ">
                 <label for="pseudoFormulaire">Votre nom (facultatif)</label>

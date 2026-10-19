@@ -133,6 +133,18 @@ remplace Google Maps pour l'essentiel, **sans Internet** ; les liens Maps resten
 Un lieu du jour pas encore placé figure dans la légende avec « pas encore placé sur le plan ». Les établissements
 sans lieu (« Lieu à préciser ») n'apparaissent pas sur le plan.
 
+## Après la mise à jour 3.5.0
+
+1. Au premier démarrage, `foodtrucks.csv` reçoit deux colonnes en fin : **photo** et **fidelite** (copie
+   `foodtrucks-avant-migration-<date>.csv` gardée à côté). Les photos validées sur la planche sont attribuées d'après
+   le nom de l'établissement : vérifiez sur la page d'accueil que chaque carte a la bonne photo (Libanais et Les
+   canailles n'en ont pas encore).
+2. Les collègues peuvent désormais **changer la photo** (« Modifier les infos ») : les fichiers envoyés sont dans
+   `data\photo-<empreinte>.jpg`, sauvegardés chaque jour. Un changement de photo apparaît dans **À surveiller**, et
+   l'historique de la fiche permet de revenir à l'ancienne.
+3. Cochez **Propose une carte de fidélité** pour les établissements concernés (formulaire de la fiche, ici ou sur la
+   page d'accueil).
+
 ## Après la mise à jour 3.4.0
 
 1. Déposez le **plan des emplacements** et placez les lieux (ci-dessus) ; sans plan, la page d'accueil ne montre

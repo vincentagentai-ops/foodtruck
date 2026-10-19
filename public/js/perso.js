@@ -8,7 +8,7 @@ const Perso = (() => {
     const CLE_PREFERENCES = 'ft_preferences';
     /** Toutes les clés que le site écrit dans le navigateur (page « Données et confidentialité »). */
     const TOUTES_LES_CLES = ['ft_favoris', 'ft_filtres', 'ft_pseudo', CLE_MARQUES, CLE_CARNET, CLE_PREFERENCES,
-        'ft_hasard_non_essaye', 'ft_plan_ouvert'];
+        'ft_hasard_non_essaye', 'ft_plan_ouvert', 'ft_recherche_ouverte'];
 
     const ecouteurs = [];
     const prevenir = () => ecouteurs.forEach(fn => fn());

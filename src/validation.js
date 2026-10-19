@@ -30,7 +30,10 @@ const MOTIFS_CATEGORIES = [
 
 const LONGUEUR_MAX = {
     nom: 80, cuisine: 80, jours: 60, emplacement: 1000, prix: 30, site: 1000, horaires: 60, lieu: 40, lieux_jours: 3000,
+    photo: 100,
 };
+// Adresse d'une photo : photo d'origine du site ou photo envoyée par un collègue (voir photos.js)
+const ADRESSE_PHOTO = /^\/(?:img\/etablissements\/[a-z0-9-]+|photos\/[0-9a-f]{20})\.(?:jpg|png|webp)$/;
 
 function retirerAccents(s) {
     return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -100,7 +103,7 @@ function estUrl(s) {
 /**
  * Lieux différents selon le jour (colonne lieux_jours) : « Jeudi=parking-nord;Vendredi=https://maps… »
  * -> { Jeudi: 'parking-nord', Vendredi: 'https://maps…' }. Accepte aussi un objet { Jeudi: '…' }.
- * La valeur est l'identifiant d'un lieu ou un lien Google Maps.
+ * La valeur est l'identifiant d'un lieu (son nom est aussi reconnu à la validation) ou un lien Google Maps.
  */
 function lireLieuxJours(saisie) {
     const resultat = {};
@@ -157,9 +160,25 @@ function validerFoodtruck(donnees, options = {}) {
         emplacement: texte('emplacement'),
         statut: texte('statut').toLowerCase() || 'actif',
         lieux_jours: '',
+        photo: texte('photo'),
+        // Case à cocher : « oui » ou vide
+        fidelite: [true, 'oui', 'true', '1', 'on', 'x', 'yes'].includes(typeof d.fidelite === 'string' ? cle(d.fidelite) : d.fidelite) ? 'oui' : '',
     };
     const { jours, invalides } = normaliserJours(d.jours);
     ft.jours = jours.join(';');
+
+    // Lieux connus : identifiants, ou objets { id, nom } (le nom saisi est alors reconnu et remplacé par l'identifiant)
+    const lieuxConnus = options.lieux && options.lieux.map(l => (typeof l === 'object' ? l : { id: l, nom: '' }));
+    const resoudreLieu = valeur => {
+        if (!lieuxConnus || !valeur) return valeur;
+        const trouve = lieuxConnus.find(l => l.id === valeur)
+            || lieuxConnus.find(l => cle(l.id) === cle(valeur) || (l.nom && cle(l.nom) === cle(valeur)));
+        return trouve ? trouve.id : null;
+    };
+    if (ft.lieu) {
+        const id = resoudreLieu(ft.lieu);
+        if (id) ft.lieu = id; else erreurs.push(`Lieu inconnu : ${ft.lieu}.`);
+    }
 
     // Lieu différent certains jours (établissement multi-lieux)
     const parJour = {};
@@ -168,13 +187,15 @@ function validerFoodtruck(donnees, options = {}) {
         const jour = JOURS.find(j => cle(j) === cle(saisieJour));
         if (!jour) { erreurs.push(`Lieu par jour : jour non reconnu (${saisieJour}).`); continue; }
         if (!jours.includes(jour)) continue; // jour retiré : son lieu particulier est oublié
-        if (valeur === ft.lieu) continue; // identique au lieu habituel
+        let lieuJour = valeur;
         if (estUrl(valeur)) {
             if (valeur.includes(';')) erreurs.push(`Lieu du ${jour.toLowerCase()} : lien invalide.`);
-        } else if (options.lieux && !options.lieux.includes(valeur)) {
-            erreurs.push(`Lieu du ${jour.toLowerCase()} inconnu : ${valeur}.`);
+        } else {
+            lieuJour = resoudreLieu(valeur);
+            if (!lieuJour) { erreurs.push(`Lieu du ${jour.toLowerCase()} inconnu : ${valeur}.`); continue; }
         }
-        parJour[jour] = valeur;
+        if (lieuJour === ft.lieu) continue; // identique au lieu habituel
+        parJour[jour] = lieuJour;
     }
     ft.lieux_jours = ecrireLieuxJours(parJour);
 
@@ -197,10 +218,10 @@ function validerFoodtruck(donnees, options = {}) {
     if (!ft.cuisine) erreurs.push('Le type de cuisine est obligatoire.');
     if (jours.length === 0) erreurs.push('Indiquez au moins un jour entre lundi et vendredi.');
     if (invalides.length) erreurs.push(`Jour(s) non reconnu(s) : ${invalides.join(', ')} (du lundi au vendredi uniquement).`);
-    if (ft.lieu && options.lieux && !options.lieux.includes(ft.lieu)) erreurs.push(`Lieu inconnu : ${ft.lieu}.`);
     if (!ft.emplacement && !ft.lieu) erreurs.push("Indiquez un lieu ou l'emplacement Google Maps.");
     if (ft.emplacement && !estUrl(ft.emplacement)) erreurs.push("L'emplacement doit être une adresse web (https://…).");
     if (ft.site && !estUrl(ft.site)) erreurs.push('Le site doit être une adresse web (https://…).');
+    if (ft.photo && !ADRESSE_PHOTO.test(ft.photo)) erreurs.push('Photo invalide : envoyez de nouveau le fichier.');
     if (ft.prix && !/^\d+(?:[.,]\d+)?(?:-\d+(?:[.,]\d+)?)?$/.test(ft.prix)) {
         erreurs.push('Le prix doit être un nombre ou une fourchette (ex : 12 ou 10-15).');
     }

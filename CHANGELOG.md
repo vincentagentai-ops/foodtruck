@@ -2,6 +2,35 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions numérotées MAJEUR.MINEUR.CORRECTIF.
 
+## [3.5.0] — 2026-10-20
+
+### Corrigé
+- **Lieu selon le jour** : le nom d'un lieu (« Mercredi=Rond-point Numih ») est maintenant reconnu, comme son
+  identifiant (casse, accents et ponctuation ignorés), et enregistré sous son identifiant. Avant, seul l'identifiant
+  était accepté et le nom donnait « Lieu du mercredi inconnu ». Même chose pour le lieu habituel.
+
+### Ajouté
+- **Photos des établissements** : nouvelle colonne `photo` du catalogue, affichée en tête de chaque carte et dans la
+  fiche. **Modifiable par tous** dans « Modifier les infos » (ou à l'ajout) : la photo est réduite dans le navigateur
+  (1280 px, JPEG), envoyée (`POST /api/photos`, PNG/JPEG/WebP reconnus à leurs octets, 3 Mo au plus), enregistrée dans
+  `data/photo-<empreinte>.<ext>` (sauvegardée chaque jour) et servie par `/photos/…` avec une CSP « sandbox ». Le
+  changement est historisé et restaurable comme les autres champs (vignettes dans l'historique) et signalé dans
+  « À surveiller ». 16 photos d'origine validées par l'administrateur (`public/img/etablissements/`).
+- **Carte de fidélité** : nouvelle colonne `fidelite` (« oui » ou vide), case à cocher « Propose une carte de
+  fidélité » modifiable par tous (et dans l'espace administrateur) ; badge « 🎟 Carte de fidélité » sur la carte et ligne
+  dans les infos de la fiche.
+
+### Modifié
+- **Page d'accueil réorganisée** : jours, puis « Rechercher et filtrer » **replié à chaque ouverture** (« Au hasard »
+  et « Effacer les filtres » restent visibles), puis le plan des emplacements à gauche (collant au défilement) et la
+  liste des établissements à droite ; une seule colonne sans plan ou sur écran étroit.
+- **Plan agrandi** : un clic sur le plan (ou « ⤢ Agrandir ») l'affiche sur toute la largeur, par-dessus la liste ; un
+  second clic (ou Échap) le réduit. L'évènement `plan_ouvert` compte désormais les agrandissements.
+
+### Migration
+- Automatique au démarrage : colonnes `photo` et `fidelite` ajoutées en fin de `foodtrucks.csv` (copie de sécurité
+  avant réécriture) ; la photo d'origine est attribuée une fois d'après le nom de l'établissement.
+
 ## [3.4.0] — 2026-10-19
 
 Phase 4 de la feuille de route (`AUDIT_ET_PROPOSITIONS.md` §3.2) : améliorations de confort. Tout ce qui est personnel

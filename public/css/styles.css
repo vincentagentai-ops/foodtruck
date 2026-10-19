@@ -386,6 +386,9 @@ code { background: var(--survol); padding: 1px 5px; border-radius: 4px; }
 .ligne-outils { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
 .ligne-outils .champ { margin: 0; flex: 1 1 170px; }
 .ligne-outils .champ.recherche { flex: 2 1 260px; }
+#outilsRecherche > summary { cursor: pointer; font-weight: 650; font-size: 1.05rem; }
+#outilsRecherche[open] > summary { margin-bottom: 12px; }
+.outils .ligne-boutons { margin-top: 10px; }
 .plus-filtres { margin-top: 12px; }
 .plus-filtres summary { cursor: pointer; color: var(--lien); font-weight: 500; margin-bottom: 10px; }
 .ligne-serree { margin-top: 4px; gap: 8px; }
@@ -428,6 +431,10 @@ code { background: var(--survol); padding: 1px 5px; border-radius: 4px; }
 .fiche.surligne { animation: surligne 2.2s ease-out; }
 @keyframes surligne { 0%, 40% { background: var(--surligne); box-shadow: 0 0 0 3px var(--primaire); } 100% { background: var(--surface); } }
 .fiche p { margin: 0; }
+.photo-fiche { display: block; margin: -12px -14px 6px; padding: 0; border: 0; background: var(--bordure); cursor: pointer; border-radius: 10px 10px 0 0; overflow: hidden; }
+.photo-fiche img { display: block; width: 100%; height: 140px; object-fit: cover; }
+.bandeau-ferme + .photo-fiche { margin: 0 0 6px; border-radius: 8px; }
+.photo-detail { display: block; width: 100%; max-height: 260px; object-fit: cover; border-radius: 10px; margin-bottom: 12px; }
 .fiche-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .fiche h3 { margin: 0; font-size: 1.05rem; }
 .etoile {
@@ -441,6 +448,12 @@ code { background: var(--survol); padding: 1px 5px; border-radius: 4px; }
 }
 .badge.nouveau, .badge.essaye { background: var(--vert-badge); color: var(--vert-texte); }
 .badge.attention, .badge.a-tester { background: var(--ambre-badge); color: var(--attention-texte); }
+.badge.fidelite { background: var(--ambre-badge); color: var(--attention-texte); }
+
+/* Photo dans le formulaire et dans l'historique */
+.apercu-photo { min-height: 60px; display: flex; align-items: center; }
+.apercu-photo img { width: 100%; max-width: 320px; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 8px; border: 1px solid var(--bordure); }
+.photo-historique { width: 96px; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 4px; vertical-align: middle; border: 1px solid var(--bordure); }
 .fiche .cuisine { color: var(--texte-2); }
 .fiche .lieu { font-size: 0.9rem; }
 .fiche .lieu.a-preciser { color: var(--texte-2); font-style: italic; }
@@ -608,8 +621,34 @@ details.carte > summary small { font-weight: 400; color: var(--texte-2); font-si
 details.carte[open] > summary { margin-bottom: 10px; }
 .carnet .quand { min-width: 7em; display: inline-block; }
 
+/* Plan à gauche, établissements à droite (une seule colonne sans plan ou sur petit écran) */
+.disposition { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; margin-bottom: 24px; }
+.disposition > .carte { margin-bottom: 0; }
+.disposition.avec-plan { grid-template-columns: minmax(280px, 2fr) minmax(0, 3fr); }
+.disposition.avec-plan .plan { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+.plan h2 { margin: 0 0 10px; font-size: 1.1rem; }
+.plan h2 small { font-weight: 400; color: var(--texte-2); font-size: 0.9rem; }
+.disposition.avec-plan .fiches { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+/* Plan agrandi : occupe toute la largeur, par-dessus la liste (qui garde sa place en dessous) */
+.tete-plan { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.tete-plan h2 { margin: 0; }
+.disposition .plan-cadre { cursor: zoom-in; }
+@media (min-width: 901px) {
+    .disposition.avec-plan.plan-agrandi .plan { grid-column: 1 / -1; grid-row: 1; z-index: 3; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28); }
+    .disposition.avec-plan.plan-agrandi .resultats { grid-column: 2; grid-row: 1; }
+    .disposition.plan-agrandi .plan-cadre { cursor: zoom-out; flex: 0 1 auto; width: fit-content; margin: 0 auto; }
+    .disposition.plan-agrandi .plan-cadre img { width: auto; max-width: 100%; max-height: calc(100vh - 150px); }
+    .disposition.plan-agrandi .legende-plan { flex: 1 1 220px; }
+}
+@media (max-width: 900px) {
+    #agrandirPlan { display: none; }
+    .disposition .plan-cadre { cursor: default; }
+    .disposition.avec-plan { grid-template-columns: minmax(0, 1fr); }
+    .disposition.avec-plan .plan { position: static; max-height: none; }
+}
 .plan-conteneur { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .plan-cadre { position: relative; flex: 3 1 420px; max-width: 100%; line-height: 0; }
+.disposition .plan-cadre, .disposition .legende-plan { flex-basis: 100%; }
 .plan-cadre img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--bordure); }
 .repere {
     position: absolute; transform: translate(-50%, -50%);

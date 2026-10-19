@@ -18,6 +18,7 @@ const { Limiteur, limiter } = require('./limites');
 const { Etablissements, CHAMPS_FACTUELS, LIBELLES_CHAMPS, chercherDoublons, champsModifies } = require('./etablissements');
 const { Contributions, CRITERES, TYPES_SIGNALEMENT } = require('./contributions');
 const { Plan, validerImage, validerPosition, TAILLE_MAX } = require('./plan');
+const { Photos } = require('./photos');
 const { version } = require('../package.json');
 
 const DOSSIER_PUBLIC = path.join(__dirname, '..', 'public');
@@ -54,6 +55,7 @@ function creerApplication(config, options = {}) {
     const etablissements = new Etablissements(stockage, { horloge, journal, moderation: () => contributions.seuils() });
     contributions = new Contributions(stockage, etablissements, { horloge });
     const plan = new Plan(stockage);
+    const photos = new Photos(stockage);
     const app = express();
     let transporteur = options.transporteur || null;
     if (!transporteur && config.mail.hote) {
@@ -97,9 +99,10 @@ function creerApplication(config, options = {}) {
     // Évènements d'usage : corps limité à 2 ko ; image du plan : lue par sa route, après le mot de passe
     // administrateur (voir plus bas) ; le reste de l'API : 20 ko
     const ADRESSE_IMAGE_PLAN = '/api/admin/plan/image';
+    const ADRESSE_ENVOI_PHOTO = '/api/photos';
     app.use(['/api/evenements', '/api/log'], express.json({ limit: '2kb' }));
     const json20ko = express.json({ limit: '20kb' });
-    app.use((req, res, next) => (req.path === ADRESSE_IMAGE_PLAN ? next() : json20ko(req, res, next)));
+    app.use((req, res, next) => ([ADRESSE_IMAGE_PLAN, ADRESSE_ENVOI_PHOTO].includes(req.path) ? next() : json20ko(req, res, next)));
 
     const ipDe = req => req.ip || req.socket.remoteAddress;
 
@@ -346,8 +349,9 @@ function creerApplication(config, options = {}) {
     }
 
     async function validerOuErreur(donnees, { admin = false } = {}) {
-        const lieux = (await stockage.lireLieux()).map(l => l.id);
+        const lieux = (await stockage.lireLieux()).map(l => ({ id: l.id, nom: l.nom }));
         const { foodtruck, erreurs } = validerFoodtruck(donnees, { lieux });
+        if (foodtruck.photo && !erreurs.length && !(await photos.existe(foodtruck.photo))) erreurs.push('Photo introuvable : envoyez de nouveau le fichier.');
         if (erreurs.length) throw new ErreurHttp(400, admin ? 'Données invalides.' : 'Informations incomplètes ou invalides.', erreurs);
         return foodtruck;
     }
@@ -377,6 +381,26 @@ function creerApplication(config, options = {}) {
             etablissement: fiche, doublons,
         });
     }));
+    // Photo d'un établissement : le fichier est enregistré, puis son adresse est publiée avec les autres infos de la
+    // fiche (ajout ou « Modifier les infos »), donc historisée et restaurable comme le reste
+    const jsonPhoto = express.json({ limit: `${Math.ceil(TAILLE_MAX * 4 / 3 / 1024) + 16}kb` });
+    app.post(ADRESSE_ENVOI_PHOTO, limiteContributions, jsonPhoto, route(async (req, res) => {
+        await auteurAutorise(req);
+        const adresse = await photos.enregistrer(validerImage(req.body));
+        res.status(201).json({ message: 'Photo prête : enregistrez la fiche pour la publier.', photo: adresse });
+    }));
+
+    app.get('/photos/:fichier', route(async (req, res) => {
+        const photo = await photos.lire(`/photos/${req.params.fichier}`);
+        if (!photo) return res.status(404).sendFile(path.join(DOSSIER_PUBLIC, '404.html'));
+        res.set({
+            'Content-Type': photo.type,
+            'Content-Security-Policy': "default-src 'none'; sandbox",
+            'Cache-Control': 'public, max-age=31536000, immutable', // le nom change avec le contenu
+        });
+        res.send(photo.octets);
+    }));
+
     // Ancienne file de suggestions : les anciennes pages (en cache) publient désormais directement
     app.post(['/api/suggestions', '/api/suggest-foodtruck'], (req, res) => res.redirect(308, '/api/etablissements'));
 

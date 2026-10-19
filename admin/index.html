@@ -121,10 +121,12 @@
                     <div class="champ"><label for="f-lieu">Lieu</label>
                         <select id="f-lieu" name="lieu"><option value="">(lieu à préciser)</option></select></div>
                     <div class="champ"><label for="f-emplacement">Lien Google Maps <small>(obligatoire sans lieu)</small></label><input type="url" id="f-emplacement" name="emplacement"></div>
-                    <div class="champ"><label for="f-lieux_jours">Lieu selon le jour <small>(ex : Jeudi=parking-nord;Vendredi=https://maps…)</small></label><input type="text" id="f-lieux_jours" name="lieux_jours" placeholder="Vide = lieu habituel tous les jours"></div>
+                    <div class="champ"><label for="f-lieux_jours">Lieu selon le jour <small>(nom ou identifiant du lieu, ex : Jeudi=Parking nord;Vendredi=https://maps…)</small></label><input type="text" id="f-lieux_jours" name="lieux_jours" placeholder="Vide = lieu habituel tous les jours"></div>
                     <div class="champ"><label for="f-horaires">Horaires</label><input type="text" id="f-horaires" name="horaires" maxlength="60" placeholder="Ex : 11h30-14h"></div>
                     <div class="champ"><label for="f-prix">Prix (€)</label><input type="text" id="f-prix" name="prix" placeholder="Ex : 10-15"></div>
                     <div class="champ"><label for="f-site">Site web</label><input type="url" id="f-site" name="site"></div>
+                    <div class="champ"><label class="case"><input type="checkbox" id="f-fidelite" name="fidelite" value="oui"> Propose une carte de fidélité</label></div>
+                    <div class="champ"><label for="f-photo">Photo <small>(adresse ; pour envoyer un fichier : « Modifier les infos » sur la fiche publique)</small></label><input type="text" id="f-photo" name="photo" maxlength="100" placeholder="/img/etablissements/… ou /photos/…"></div>
                     <div class="champ"><label for="f-statut">Statut</label>
                         <select id="f-statut" name="statut">
                             <option value="actif">Actif (affiché)</option>

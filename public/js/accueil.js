@@ -9,7 +9,6 @@
     const CLE_FAVORIS = 'ft_favoris';
     const CLE_FILTRES = 'ft_filtres';
     const CLE_HASARD = 'ft_hasard_non_essaye';
-    const CLE_PLAN = 'ft_plan_ouvert';
     const JOURS_NOUVEAU = 15; // badge « Nouveau »
     const JOURS_NOUVEAUTES = 7; // encadré « Nouveaux cette semaine »
     const LIBELLES_ESSAI = { pas_essaye: 'pas encore essayé', a_tester: 'à tester', essaye: 'déjà essayé' };
@@ -233,6 +232,15 @@
         return '';
     }
 
+    /** Photo de l'établissement (adresse locale uniquement) ; clic = ouvrir la fiche. */
+    function imageFiche(ft) {
+        if (!Commun.adressePhoto(ft.photo)) return '';
+        return `<button type="button" class="photo-fiche" data-fiche="${Commun.html(ft.id)}" tabindex="-1" aria-hidden="true">
+                <img src="${Commun.html(ft.photo)}" alt="" loading="lazy" width="640" height="400"></button>`;
+    }
+
+    const badgeFidelite = ft => (ft.fidelite === 'oui' ? '<span class="badge fidelite" title="Propose une carte de fidélité">🎟 Carte de fidélité</span>' : '');
+
     function fiche(ft, avecLieu, perso) {
         const h = Commun.html;
         const site = Commun.urlSure(ft.site);
@@ -246,6 +254,7 @@
             ft.type === 'restaurant' ? '<span class="badge">Restaurant</span>' : '',
             ft.statut === 'incertain' || (ft.resume && ft.resume.plusPresent) ? '<span class="badge attention">Présence à confirmer</span>' : '',
             badgeEssai(ft, perso.marques, perso.carnet),
+            badgeFidelite(ft),
         ].join('');
         const infos = [Commun.formaterPrix(ft.prix), ft.horaires].filter(Boolean).map(t => `<span>${h(t)}</span>`).join('');
         const etiquettes = listeDe(ft.etiquettes)
@@ -257,6 +266,7 @@
         ].filter(Boolean).join('');
         return `<article class="fiche${favori ? ' favori' : ''}${ft.statut === 'incertain' ? ' incertain' : ''}${ferme ? ' fermee' : ''}" id="ft-${h(ft.id)}" tabindex="-1">
             ${ferme ? `<p class="bandeau-ferme">Fermé exceptionnellement ce ${h(Commun.dateCourte(dateDuJour(jourCourant)))}</p>` : ''}
+            ${imageFiche(ft)}
             <div class="fiche-tete">
                 <h3><button type="button" class="lien nom-fiche" data-fiche="${h(ft.id)}">${h(ft.nom)}</button> ${badges}</h3>
                 <button type="button" class="etoile" data-favori="${h(ft.id)}" aria-pressed="${favori}"
@@ -327,8 +337,10 @@
 
     function afficherPlan(liste, numeros) {
         const zone = document.getElementById('plan');
-        if (!plan || !plan.image || vue !== 'jour') { zone.hidden = true; return; }
+        const disposition = document.getElementById('disposition');
+        if (!plan || !plan.image || vue !== 'jour') { zone.hidden = true; disposition.classList.remove('avec-plan'); agrandirPlan(false); return; }
         zone.hidden = false;
+        disposition.classList.add('avec-plan');
         const h = Commun.html;
         const image = document.getElementById('planImage');
         if (image.getAttribute('src') !== plan.image) image.src = plan.image;
@@ -362,7 +374,20 @@
         document.getElementById('resumePlan').textContent = ids.length ? `· ${ids.length} lieu${ids.length > 1 ? 'x' : ''} ${quand}` : '';
     }
 
+    /** Plan agrandi par-dessus la liste (clic sur le plan ou bouton), réduit au clic suivant ou avec Échap. */
+    function agrandirPlan(agrandi) {
+        const disposition = document.getElementById('disposition');
+        disposition.classList.toggle('plan-agrandi', agrandi);
+        const bouton = document.getElementById('agrandirPlan');
+        bouton.setAttribute('aria-pressed', String(agrandi));
+        bouton.textContent = agrandi ? '⤡ Réduire' : '⤢ Agrandir';
+        document.getElementById('planCadre').title = agrandi ? 'Cliquer pour réduire le plan' : 'Cliquer pour agrandir le plan';
+        if (agrandi) Commun.evenement('plan_ouvert', jourCourant);
+    }
+    const planAgrandi = () => document.getElementById('disposition').classList.contains('plan-agrandi');
+
     function allerAuLieu(id) {
+        agrandirPlan(false);
         Commun.evenement('plan_lieu_clic', id);
         const groupe = document.getElementById(`lieu-${id}`);
         if (!groupe) return;
@@ -659,15 +684,17 @@
         const surPlan = e => {
             const lieu = e.target.closest('[data-lieu]');
             if (lieu) allerAuLieu(lieu.dataset.lieu);
+            else if (e.currentTarget.id === 'planCadre') agrandirPlan(!planAgrandi());
         };
         document.getElementById('planCadre').addEventListener('click', surPlan);
         document.getElementById('legendePlan').addEventListener('click', surPlan);
-        const detailsPlan = document.getElementById('plan');
-        detailsPlan.open = Commun.lireLocal(CLE_PLAN, false) === true;
-        detailsPlan.addEventListener('toggle', () => {
-            Commun.ecrireLocal(CLE_PLAN, detailsPlan.open);
-            if (detailsPlan.open) Commun.evenement('plan_ouvert', jourCourant);
+        document.getElementById('agrandirPlan').addEventListener('click', () => agrandirPlan(!planAgrandi()));
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && planAgrandi() && !document.querySelector('dialog[open]')) agrandirPlan(false);
         });
+        // Recherche et filtres : repliés à chaque ouverture de la page
+        const outils = document.getElementById('outilsRecherche');
+        outils.addEventListener('toggle', () => { if (outils.open) document.getElementById('recherche').focus(); });
         // Carnet
         const carnet = document.getElementById('carnet');
         carnet.addEventListener('toggle', () => { if (carnet.open) Commun.evenement('carnet_ouvert'); });

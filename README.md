@@ -42,4 +42,4 @@ temporaire : `DATA_DIR=/tmp/essai-ft BACKUP_DIR=/tmp/essai-ft-sauvegardes npm st
 server.js  src/  public/  admin/  test/  docs/  scripts/  data-exemple/  data/ et sauvegardes/ (hors git)
 ```
 
-Version actuelle : **3.4.0**.
+Version actuelle : **3.5.0**.

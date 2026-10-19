@@ -44,7 +44,7 @@ const TYPES_PUBLICS = [
     'preferences', // préférences alimentaires (cible : « enregistrees », « effacees », « privilegier »)
     'carnet_ajout', 'carnet_retrait', // « J'y ai mangé aujourd'hui » (cible : id)
     'carnet_ouvert', 'carnet_efface',
-    'plan_ouvert', // plan des emplacements déplié
+    'plan_ouvert', // plan des emplacements agrandi (3.5.0 ; déplié avant)
     'plan_lieu_clic', // clic sur un lieu du plan (cible : id du lieu)
     'donnees_locales_effacees', // « Effacer les données de ce navigateur » (page confidentialité)
 ];

@@ -47,11 +47,76 @@ const Formulaires = (() => {
         }).join('');
     }
 
+    // --- Photo : réduite dans le navigateur (1280 px au plus, JPEG), envoyée, puis publiée avec la fiche
+    const ADRESSE_PHOTO = /^\/(?:img\/etablissements\/[a-z0-9-]+|photos\/[0-9a-f]{20})\.(?:jpg|png|webp)$/;
+    const COTE_MAX = 1280;
+
+    function afficherPhoto(adresse) {
+        formulaire.elements.photo.value = adresse || '';
+        const apercu = document.getElementById('apercuPhoto');
+        apercu.innerHTML = ADRESSE_PHOTO.test(adresse || '')
+            ? `<img src="${h(adresse)}" alt="Photo actuelle">` : '<span class="aide-petite">Aucune photo</span>';
+        document.getElementById('retirerPhoto').hidden = !adresse;
+    }
+
+    async function chargerImage(fichier) {
+        if (window.createImageBitmap) return createImageBitmap(fichier);
+        const url = await new Promise((ok, ko) => {
+            const lecteur = new FileReader();
+            lecteur.onload = () => ok(lecteur.result);
+            lecteur.onerror = ko;
+            lecteur.readAsDataURL(fichier);
+        });
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        return image;
+    }
+
+    async function reduire(fichier) {
+        const image = await chargerImage(fichier);
+        const echelle = Math.min(1, COTE_MAX / Math.max(image.width, image.height));
+        const toile = document.createElement('canvas');
+        toile.width = Math.round(image.width * echelle);
+        toile.height = Math.round(image.height * echelle);
+        const ctx = toile.getContext('2d');
+        ctx.fillStyle = '#ffffff'; // fond blanc pour les PNG transparents
+        ctx.fillRect(0, 0, toile.width, toile.height);
+        ctx.drawImage(image, 0, 0, toile.width, toile.height);
+        return toile.toDataURL('image/jpeg', 0.85);
+    }
+
+    async function envoyerPhoto(fichier) {
+        const etat = document.getElementById('etatPhoto');
+        if (!fichier) return;
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(fichier.type)) {
+            etat.textContent = 'Format refusé : choisissez une photo JPEG, PNG ou WebP.';
+            return;
+        }
+        etat.textContent = 'Préparation de la photo…';
+        const bouton = document.getElementById('envoyerFormulaire');
+        bouton.disabled = true;
+        try {
+            const donnees = await reduire(fichier);
+            etat.textContent = 'Envoi de la photo…';
+            const reponse = await Commun.api('/api/photos', { method: 'POST', body: { type: 'image/jpeg', donnees } });
+            afficherPhoto(reponse.photo);
+            etat.textContent = mode.type === 'ajout' ? 'Photo prête : elle sera publiée avec l\'établissement.' : 'Photo prête : cliquez sur « Enregistrer » pour la publier.';
+        } catch (err) {
+            etat.textContent = err.message && err.statut ? err.message : 'Cette image ne peut pas être lue. Essayez une autre photo (JPEG ou PNG).';
+        } finally {
+            bouton.disabled = false;
+        }
+    }
+
     function remplir(ft) {
+        afficherPhoto(ft.photo);
+        document.getElementById('etatPhoto').textContent = "JPEG, PNG ou WebP : la photo est réduite avant l'envoi. De préférence le camion ou un plat.";
         for (const champ of ['nom', 'type', 'categorie', 'cuisine', 'lieu', 'emplacement', 'prix', 'horaires', 'site']) {
             formulaire.elements[champ].value = ft[champ] || '';
         }
         if (!formulaire.elements.type.value) formulaire.elements.type.value = 'foodtruck';
+        formulaire.elements.fidelite.checked = ft.fidelite === 'oui';
         const coches = { jours: liste(ft.jours), paiements: liste(ft.paiements), etiquettes: liste(ft.etiquettes) };
         for (const [nom, valeurs] of Object.entries(coches)) {
             formulaire.querySelectorAll(`input[name=${nom}]`).forEach(c => { c.checked = valeurs.includes(c.value); });
@@ -69,6 +134,7 @@ const Formulaires = (() => {
             jours: d.getAll('jours').join(';'), lieu: d.get('lieu') || '', lieux_jours: parJour.join(';'),
             emplacement: d.get('emplacement').trim(), prix: d.get('prix'), horaires: d.get('horaires'),
             paiements: d.getAll('paiements').join(';'), etiquettes: d.getAll('etiquettes').join(';'), site: d.get('site').trim(),
+            photo: d.get('photo') || '', fidelite: d.get('fidelite') ? 'oui' : '',
         };
     }
 
@@ -213,6 +279,11 @@ const Formulaires = (() => {
         const categories = document.getElementById('categorie');
         for (const c of config.categories || []) categories.add(new Option(c, c));
         formulaire.addEventListener('submit', envoyer);
+        document.getElementById('fichierPhoto').addEventListener('change', e => { envoyerPhoto(e.target.files[0]); e.target.value = ''; });
+        document.getElementById('retirerPhoto').addEventListener('click', () => {
+            afficherPhoto('');
+            document.getElementById('etatPhoto').textContent = 'Photo retirée : enregistrez pour publier ce changement.';
+        });
         document.getElementById('annulerFormulaire').addEventListener('click', () => Commun.fermerModale(modale));
         document.getElementById('casesJours').addEventListener('change', () => afficherLieuxJours());
         const planifier = () => { clearTimeout(minuterieDoublons); minuterieDoublons = setTimeout(verifierDoublons, 400); };

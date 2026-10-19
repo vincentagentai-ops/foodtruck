@@ -1,0 +1,127 @@
+{
+    "_note": "Photo de chaque établissement, retrouvée par son nom (casse, accents et ponctuation ignorés). Source : site de l'établissement ou fiche Google Maps.",
+    "images": [
+        {
+            "noms": [
+                "Neki Neko"
+            ],
+            "fichier": "neki-neko.jpg",
+            "source": "https://nekinekofood31.wixsite.com/site"
+        },
+        {
+            "noms": [
+                "L'épicurieux",
+                "Lepicurieux"
+            ],
+            "fichier": "lepicurieux.jpg",
+            "source": "https://www.lepicurieux.net/"
+        },
+        {
+            "noms": [
+                "Ô Tuk Tuk",
+                "O Tuk Tuk"
+            ],
+            "fichier": "o-tuk-tuk.jpg",
+            "source": "https://otuktuk.fr/"
+        },
+        {
+            "noms": [
+                "Bibim Pop"
+            ],
+            "fichier": "bibim-pop.jpg",
+            "source": "https://www.bibimpop.fr/"
+        },
+        {
+            "noms": [
+                "Pizza Maestro"
+            ],
+            "fichier": "pizza-maestro.jpg",
+            "source": "https://pizzamaestrobasso.wixsite.com/pizzamaestrofr"
+        },
+        {
+            "noms": [
+                "Grill Truck",
+                "Le Grill Truck"
+            ],
+            "fichier": "grill-truck.jpg",
+            "source": "https://legrilltruck.com/la-carte/"
+        },
+        {
+            "noms": [
+                "Spice Box"
+            ],
+            "fichier": "spice-box.jpg",
+            "source": "https://www.spicebox.fr/"
+        },
+        {
+            "noms": [
+                "CamiHong",
+                "Le Camihong"
+            ],
+            "fichier": "camihong.jpg",
+            "source": "https://www.camihong.fr"
+        },
+        {
+            "noms": [
+                "Ladilafé"
+            ],
+            "fichier": "ladilafe.jpg",
+            "source": "https://www.ladilafe.net/"
+        },
+        {
+            "noms": [
+                "Crêperie Doc Krampouz",
+                "Doc Krampouz"
+            ],
+            "fichier": "creperie-doc-krampouz.jpg",
+            "source": "Planche photos (ajoutée par l'administrateur)"
+        },
+        {
+            "noms": [
+                "Pickles Salad Bar",
+                "Pickles"
+            ],
+            "fichier": "pickles-salad-bar.jpg",
+            "source": "Google Maps"
+        },
+        {
+            "noms": [
+                "So Piad'In",
+                "So Piadin"
+            ],
+            "fichier": "so-piadin.jpg",
+            "source": "Google Maps"
+        },
+        {
+            "noms": [
+                "Moya"
+            ],
+            "fichier": "moya.jpg",
+            "source": "Google Maps"
+        },
+        {
+            "noms": [
+                "Ban Thai",
+                "Ban Thaï"
+            ],
+            "fichier": "ban-thai.jpg",
+            "source": "Planche photos (ajoutée par l'administrateur)"
+        },
+        {
+            "noms": [
+                "Rosemund",
+                "Le Comptoir de Rosemonde"
+            ],
+            "fichier": "rosemund.jpg",
+            "source": "Planche photos (ajoutée par l'administrateur)"
+        },
+        {
+            "noms": [
+                "Tartine & Lulu",
+                "Tartine et Lulu"
+            ],
+            "fichier": "tartine-lulu.jpg",
+            "source": "Planche photos (ajoutée par l'administrateur)"
+        }
+    ]
+}

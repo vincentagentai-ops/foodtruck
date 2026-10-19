@@ -30,22 +30,22 @@ En cas de problème : `pm2 logs foodtruck` affiche les erreurs.
 
 ---
 
-## B. Passer directement à la 3.4.0 depuis une version 3.x (une seule fois)
+## B. Passer directement à la 3.5.0 depuis une version 3.x (une seule fois)
 
-La mise à jour se fait **en une seule fois**, quelle que soit la version installée (3.0.0, 3.1.0, 3.2.0 ou 3.3.0) :
+La mise à jour se fait **en une seule fois**, quelle que soit la version installée (3.0.0, 3.1.0, 3.2.0, 3.3.0 ou 3.4.0) :
 au premier démarrage, le site met les données au format actuel, en gardant une copie des fichiers d'origine. Il est
 inutile d'installer les versions intermédiaires.
 
 1. **Sauvegarde préalable** (en plus de celle que fait le script) : copier tout `C:\SITES\FoodTrucksNodejs` en
-   `C:\SITES\FoodTrucksNodejs_avant_3.4.0`.
-2. **Mise à jour** : procédure A avec le zip 3.4.0 (depuis la 3.0.0, le script supprime aussi l'ancien dossier
+   `C:\SITES\FoodTrucksNodejs_avant_3.5.0`.
+2. **Mise à jour** : procédure A avec le zip 3.5.0 (depuis la 3.0.0, le script supprime aussi l'ancien dossier
    `public\admin`).
 3. **`.env`** (Bloc-notes) : rien d'obligatoire. Facultatif : `LIMITE_CONTRIBUTIONS=60` (remplace
    `LIMITE_SUGGESTIONS`, qui n'est plus lu) ; `HOTES_AUTORISES=` seulement si le site est appelé à travers un proxy qui
    change le nom d'hôte (voir point 5). Après modification : `pm2 restart foodtruck`.
 4. **Vérifications** dans `pm2 logs foodtruck --lines 50` :
-   - si la version installée était antérieure à la 3.2.0 : « Données migrées au format 3.2.0. Copie des fichiers
-     d'origine : …foodtrucks-avant-migration-<date>.csv » (3.2.0 est le format actuel du catalogue) ;
+   - « Données migrées au format 3.5.0. Copie des fichiers d'origine : …foodtrucks-avant-migration-<date>.csv »
+     (colonnes photo et fidelite ajoutées, photos d'origine attribuées d'après le nom) ;
    - « Sauvegarde du jour : … » (si ce n'était pas déjà fait aujourd'hui) ;
    - depuis la 3.0.0 seulement : « Copie des journaux avant la première purge : …\sauvegardes\journaux-avant-premiere-purge »
      puis « Journaux antérieurs au … purgés » (la première purge retire les lignes de plus de 13 mois ; les
@@ -59,16 +59,18 @@ inutile d'installer les versions intermédiaires.
 5. **Vérifier dans le navigateur, depuis un poste de collègue** (pas depuis le serveur) :
    - la page d'accueil liste les mêmes établissements qu'avant ; « Quoi de neuf ? » et « Données et confidentialité »
      en bas de page ; bouton **Semaine** ; **Mon carnet** en bas de page ; en mode sombre Windows, le site s'affiche
-     en sombre ;
+     en sombre ; chaque carte a sa **photo** (sauf Libanais et Les canailles) ; la recherche est repliée ; un clic sur
+     le plan l'agrandit par-dessus la liste, un second clic le réduit ;
    - ouvrir une fiche : bloc « Pour moi », **Copier pour Teams** puis collage dans Teams ; cliquer **✔ Il est là**
-     puis le recliquer ; donner un avis puis le **Supprimer** ;
+     puis le recliquer ; donner un avis puis le **Supprimer** ; **Modifier les infos** → **Choisir une photo…** puis
+     **Enregistrer**, et revenir à l'ancienne photo par **Historique** → **Restaurer** ;
    - si une action affiche « Requête refusée : elle ne provient pas d'une page de ce site » : renseigner dans `.env`
      `HOTES_AUTORISES=` avec le nom utilisé dans la barre d'adresse (ex. `foodtrucks,foodtrucks.entreprise.local`),
      puis `pm2 restart foodtruck` ;
    - `/admin/` demande le mot de passe ; `/%61dmin/index.html` doit répondre « Page introuvable » ; la section
      **À surveiller** est en haut (traiter les **suggestions héritées** s'il en reste) ;
    - `/admin/statistiques.html` → bouton **Tout** : courbe remplie, tuiles remplies ; **Exporter → Par jour** ouvre un
-     CSV. Le trait de version `v3.4.0` apparaît ; ceux des versions intermédiaires non installées n'apparaissent pas.
+     CSV. Le trait de version `v3.5.0` apparaît ; ceux des versions intermédiaires non installées n'apparaissent pas.
 6. **Mise en route** dans `/admin/` (voir `docs/GUIDE_ADMINISTRATEUR.md`) :
    - depuis la 3.0.0 (≈ 1 h) : créer les lieux, puis pour chaque établissement choisir le lieu, le type
      (restaurant / foodtruck), cocher les paiements et étiquettes, saisir les horaires (« Saisie initiale après la mise
@@ -77,15 +79,16 @@ inutile d'installer les versions intermédiaires.
      L'épicurieux : fiche conservée = celle du mercredi, par exemple), vérifier les seuils ;
    - pour tous : section « Plan des emplacements », déposer l'image du quartier et placer les lieux (fichiers
      `data\plan.json` et `data\plan-image.png`, `.jpg` ou `.webp`, sauvegardés chaque jour avec le reste) ;
-   - puis suivre « Après la mise à jour 3.4.0 » (et, selon la version d'origine, 3.3.0 / 3.2.0) dans le guide.
+   - puis suivre « Après la mise à jour 3.5.0 » (et, selon la version d'origine, 3.4.0 / 3.3.0 / 3.2.0) dans le
+     guide : vérifier les photos, cocher « Propose une carte de fidélité » où il faut.
 7. **Informer les collègues** (annonce, page « Données et confidentialité »). Depuis la 3.0.0 : faire inscrire le
    traitement au registre par le correspondant RGPD / DPO.
-8. **Après quelques jours**, si tout va bien : supprimer `C:\SITES\FoodTrucksNodejs_avant_3.4.0`, les fichiers
+8. **Après quelques jours**, si tout va bien : supprimer `C:\SITES\FoodTrucksNodejs_avant_3.5.0`, les fichiers
    `data\…-avant-migration-<date>.csv` et, s'il existe, `sauvegardes\journaux-avant-premiere-purge\` (adresses IP de
    plus de 13 mois).
 
 **Revenir à la version précédente** si nécessaire : `pm2 stop foodtruck`, remettre le dossier
-`C:\SITES\FoodTrucksNodejs_avant_3.4.0` à la place du site, `pm2 restart foodtruck`. Les contributions faites
+`C:\SITES\FoodTrucksNodejs_avant_3.5.0` à la place du site, `pm2 restart foodtruck`. Les contributions faites
 entre-temps (avis, présences, ajouts) seraient perdues : copier d'abord `data\` à part pour pouvoir les reprendre.
 
 ---

@@ -1,4 +1,4 @@
-# Dossier technique — Food Trucks (v3.4.0)
+# Dossier technique — Food Trucks (v3.5.0)
 
 ## 1. Architecture
 
@@ -44,6 +44,9 @@ src/
   maintenance.js        enchaînement quotidien (sauvegarde, rotation, agrégats, purges, seuils), relancé toutes les heures
   limites.js            limites de fréquence en mémoire (par IP et par navigateur)
   plan.js               plan local des emplacements (3.4.0) : image (PNG/JPEG/WebP reconnus à leurs octets), positions
+  photos.js             photos des établissements (3.5.0) : envoi (POST /api/photos, mêmes contrôles que le plan),
+                        data/photo-<empreinte sha256>.<ext>, service /photos/… (CSP sandbox) ; photos d'origine
+                        public/img/etablissements/ + images.json (attribuées par nom à la migration)
 public/                 pages publiques : index.html, confidentialite.html, 404.html, css/, img/,
                         js/commun.js, js/accueil.js (liste, vue semaine, plan, carnet), js/fiche.js (fiche),
                         js/formulaires.js (ajout / modification), js/logique.js (logique sans DOM, partagée avec les

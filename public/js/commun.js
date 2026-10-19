@@ -65,6 +65,9 @@ const Commun = (() => {
     }
 
     /** Appel JSON ; lève une Error avec `details` si le serveur répond une erreur. */
+    /** Adresse d'une photo d'établissement servie par le site (jamais une adresse extérieure). */
+    const adressePhoto = adresse => /^\/(?:img\/etablissements\/[a-z0-9-]+|photos\/[0-9a-f]{20})\.(?:jpg|png|webp)$/.test(adresse || '');
+
     async function api(url, options = {}) {
         const reponse = await fetch(url, {
             ...options,
@@ -194,7 +197,7 @@ const Commun = (() => {
 
     return {
         copierTexte,
-        html, urlSure, formaterPrix, prixMin, simplifier, evenement, lireLocal, ecrireLocal, api, config, notifier,
+        html, urlSure, adressePhoto, formaterPrix, prixMin, simplifier, evenement, lireLocal, ecrireLocal, api, config, notifier,
         pseudo, memoriserPseudo, signature, dateISO, dateCourte, tempsRelatif, etoiles, nombre, ouvrirModale, fermerModale,
     };
 })();

@@ -6,9 +6,10 @@
 // Les colonnes sont retrouvées par leur nom dans l'en-tête : un ancien fichier (colonnes manquantes)
 // est lu avec des valeurs vides, et les colonnes inconnues sont ignorées.
 
-// Catalogue des établissements (3.2.0 : colonne lieux_jours ajoutée en fin, « Jeudi=parking-nord;Vendredi=https://… »)
+// Catalogue des établissements (3.2.0 : colonne lieux_jours ajoutée en fin, « Jeudi=parking-nord;Vendredi=https://… » ;
+// 3.5.0 : colonnes photo (adresse de la photo) et fidelite (« oui » si l'établissement a une carte de fidélité) ajoutées en fin)
 const COLONNES = ['id', 'nom', 'type', 'cuisine', 'categorie', 'etiquettes', 'jours', 'lieu', 'horaires', 'prix',
-    'paiements', 'site', 'emplacement', 'statut', 'cree_le', 'maj_le', 'version', 'lieux_jours'];
+    'paiements', 'site', 'emplacement', 'statut', 'cree_le', 'maj_le', 'version', 'lieux_jours', 'photo', 'fidelite'];
 // Format de la 3.0.0 et des versions précédentes (aussi utilisé sans en-tête par l'ancien foodtruckAValider.csv)
 const ANCIENNES_COLONNES = ['nom', 'cuisine', 'jours', 'emplacement', 'prix', 'site'];
 const COLONNES_LIEUX = ['id', 'nom', 'description', 'minutes_a_pied', 'maps'];

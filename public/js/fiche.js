@@ -47,6 +47,7 @@ const Fiche = (() => {
             ['Type', ft.type === 'restaurant' ? 'Restaurant' : 'Foodtruck'],
             ['Horaires', ft.horaires], ['Prix', Commun.formaterPrix(ft.prix)],
             ['Paiements', liste(ft.paiements).join(', ')], ['Particularités', liste(ft.etiquettes).join(', ')],
+            ['Carte de fidélité', ft.fidelite === 'oui' ? 'Oui' : ''],
         ].filter(([, v]) => v).map(([k, v]) => `<dt>${h(k)}</dt><dd>${h(v)}</dd>`).join('');
         const liensParJour = Object.entries(parJour).filter(([, v]) => Commun.urlSure(v))
             .map(([j, v]) => `<a href="${h(Commun.urlSure(v))}" target="_blank" rel="noopener" data-clic="clic_maps">Plan du ${h(j.toLowerCase())}</a>`).join('');
@@ -205,6 +206,7 @@ const Fiche = (() => {
                 <h2 id="titreFiche">${h(ft.nom)} ${badges}</h2>
                 <button type="button" class="fermer" data-action="fermer" aria-label="Fermer la fiche">×</button>
             </div>
+            ${Commun.adressePhoto(ft.photo) ? `<img class="photo-detail" src="${h(ft.photo)}" alt="Photo de ${h(ft.nom)}">` : ''}
             ${blocPerso(ft)}${blocPresence(r)}${blocInfos(ft, r)}${blocAvis(r)}`;
     }
 
@@ -254,13 +256,14 @@ const Fiche = (() => {
         try { historique = await Commun.api(url('/historique')); } catch (err) { Commun.notifier(err.message, 'erreur'); return; }
         const actions = { creer: 'Ajout', modifier: 'Modification', restaurer: 'Restauration', fusion: 'Fusion de fiches', statut_auto: 'Statut automatique', retirer: 'Retrait par son auteur' };
         const valeur = v => (v ? h(String(v).replace(/;/g, ', ')) : '<span class="vide">(vide)</span>');
+        const photoHistorique = v => (Commun.adressePhoto(v) ? `<img class="photo-historique" src="${h(v)}" alt="" loading="lazy">` : '<span class="vide">(aucune)</span>');
         const qui = e => (e.parAdmin ? "l'administrateur" : e.automatique ? 'le site (seuil automatique)' : Commun.signature(e.pseudo));
         cadre.innerHTML = historique.entrees.length ? `<ol class="historique">${historique.entrees.map(e => `<li>
             <p><strong>${h(actions[e.action] || e.action)}</strong>${e.version ? ` — version ${h(e.version)}` : ''} · ${h(qui(e))} ·
                 ${h(new Date(e.ts).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }))}
                 ${e.ancienneFiche ? ` · ancienne fiche « ${h(e.ancienneFiche)} »` : ''}</p>
             ${e.raison ? `<p class="aide-petite">${h(e.raison)}</p>` : ''}
-            ${e.champs.length ? `<ul class="changements">${e.champs.map(c => `<li>${h(c.libelle)} : ${valeur(c.avant)} → ${valeur(c.apres)}</li>`).join('')}</ul>` : ''}
+            ${e.champs.length ? `<ul class="changements">${e.champs.map(c => `<li>${h(c.libelle)} : ${c.champ === 'photo' ? `${photoHistorique(c.avant)} → ${photoHistorique(c.apres)}` : `${valeur(c.avant)} → ${valeur(c.apres)}`}</li>`).join('')}</ul>` : ''}
             ${e.restaurable ? `<button type="button" class="bouton secondaire petit" data-restaurer="${h(e.version)}">Restaurer cette version</button>` : ''}
             ${e.versionAvant ? `<button type="button" class="bouton secondaire petit" data-restaurer="${h(e.versionAvant)}">Restaurer la version d'avant (${h(e.versionAvant)})</button>` : ''}
         </li>`).join('')}</ol>` : '<p class="vide">Aucune modification enregistrée depuis la mise en place de l\'historique.</p>';

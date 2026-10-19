@@ -1,6 +1,6 @@
 'use strict';
 
-// Sauvegarde quotidienne de data/ (fichiers .csv, .json, .jsonl et image du plan) dans <BACKUP_DIR>/AAAA-MM-JJ/,
+// Sauvegarde quotidienne de data/ (fichiers .csv, .json, .jsonl, image du plan et photos envoyées) dans <BACKUP_DIR>/AAAA-MM-JJ/,
 // avec conservation des 30 dernières copies datées. La copie est faite dans un dossier temporaire puis
 // renommée : un dossier daté présent est toujours complet.
 
@@ -8,7 +8,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { decalerJours, dateLocale } = require('./statistiques');
 
-const EXTENSIONS = /\.(csv|json|jsonl|png|jpg|webp)$/i; // images : plan des emplacements
+const EXTENSIONS = /\.(csv|json|jsonl|png|jpg|webp)$/i; // images : plan des emplacements et photos des établissements
 const DOSSIER_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Fait la copie du jour si elle n'existe pas encore. Retourne le dossier créé, ou null. */

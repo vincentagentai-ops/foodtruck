@@ -14,7 +14,7 @@ config.avertissements.forEach(a => console.warn(`ATTENTION : ${a}`));
 app.locals.stockage.initialiser().then(() => {
     const { migration } = app.locals.stockage;
     if (migration.migre) {
-        console.log(`Données migrées au format 3.2.0. Copie des fichiers d'origine : ${migration.copies.join(', ')}`);
+        console.log(`Données migrées au format 3.5.0. Copie des fichiers d'origine : ${migration.copies.join(', ')}`);
     }
     app.listen(config.port, () => {
         console.log(`Food Trucks démarré sur http://localhost:${config.port} (données : ${config.dossierDonnees})`);

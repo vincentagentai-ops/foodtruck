@@ -105,7 +105,7 @@
         carnet_retrait: 'Repas retiré du carnet',
         carnet_ouvert: 'Carnet consulté',
         carnet_efface: 'Carnet effacé',
-        plan_ouvert: 'Plan des emplacements déplié',
+        plan_ouvert: 'Plan des emplacements agrandi',
         plan_lieu_clic: 'Clic sur un lieu du plan',
         donnees_locales_effacees: 'Données du navigateur effacées',
     };

@@ -13,13 +13,13 @@ const { cle, lireLieuxJours, ecrireLieuxJours, lieuDuJour, JOURS } = require('./
 
 // Informations factuelles modifiables par tous (le statut est géré par les seuils et l'administrateur)
 const CHAMPS_FACTUELS = ['nom', 'type', 'cuisine', 'categorie', 'etiquettes', 'jours', 'lieu', 'lieux_jours', 'horaires',
-    'prix', 'paiements', 'site', 'emplacement'];
+    'prix', 'paiements', 'site', 'emplacement', 'photo', 'fidelite'];
 // Champs dont la modification est signalée à l'administrateur (« À surveiller »)
-const CHAMPS_SENSIBLES = ['nom', 'lieu', 'lieux_jours', 'emplacement'];
+const CHAMPS_SENSIBLES = ['nom', 'lieu', 'lieux_jours', 'emplacement', 'photo'];
 const LIBELLES_CHAMPS = {
     nom: 'Nom', type: 'Type', cuisine: 'Cuisine', categorie: 'Catégorie', etiquettes: 'Étiquettes', jours: 'Jours',
     lieu: 'Lieu', lieux_jours: 'Lieu selon le jour', horaires: 'Horaires', prix: 'Prix', paiements: 'Paiements',
-    site: 'Site', emplacement: 'Lien Google Maps', statut: 'Statut',
+    site: 'Site', emplacement: 'Lien Google Maps', photo: 'Photo', fidelite: 'Carte de fidélité', statut: 'Statut',
 };
 
 // Mots ignorés pour comparer les noms (« Le Food Truck de Moya » ≈ « Moya »)
@@ -88,7 +88,7 @@ function champsModifies(avant, apres, champs = [...CHAMPS_FACTUELS, 'statut']) {
  */
 function fusionnerFiches(garder, absorber) {
     const g = { ...garder };
-    for (const c of ['type', 'cuisine', 'categorie', 'horaires', 'prix', 'site', 'lieu', 'emplacement']) {
+    for (const c of ['type', 'cuisine', 'categorie', 'horaires', 'prix', 'site', 'lieu', 'emplacement', 'photo', 'fidelite']) {
         if (!g[c] && absorber[c]) g[c] = absorber[c];
     }
     const union = (a, b) => [...new Set([...String(a || '').split(';'), ...String(b || '').split(';')].filter(Boolean))].join(';');

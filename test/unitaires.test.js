@@ -103,6 +103,16 @@ test("Validation : l'emplacement Maps devient facultatif si un lieu est renseign
     assert.ok(validerFoodtruck({ ...base, lieu: 'inconnu' }, { lieux: ['parking'] }).erreurs.some(e => /Lieu inconnu/.test(e)));
 });
 
+test('Validation : lieu par jour saisi avec le nom du lieu (remplacé par son identifiant)', () => {
+    const lieux = [{ id: 'parking', nom: 'Parking' }, { id: 'rond-point-numih', nom: 'Rond-point Numih' }, { id: 'master-film', nom: 'Master film' }];
+    const base = { nom: 'A', cuisine: 'B', jours: 'Mercredi;Jeudi', lieu: 'Parking' };
+    const { foodtruck, erreurs } = validerFoodtruck({ ...base, lieux_jours: 'Mercredi=Rond-point Numih;Jeudi=master FILM' }, { lieux });
+    assert.deepEqual(erreurs, []);
+    assert.equal(foodtruck.lieu, 'parking');
+    assert.equal(foodtruck.lieux_jours, 'Mercredi=rond-point-numih;Jeudi=master-film');
+    assert.ok(validerFoodtruck({ ...base, lieux_jours: 'Jeudi=Nulle part' }, { lieux }).erreurs.some(e => /Lieu du jeudi inconnu/.test(e)));
+});
+
 test('Validation : erreurs (champs manquants, URL, week-end, formule Excel, listes, statut)', () => {
     const { foodtruck, erreurs } = validerFoodtruck({
         nom: '=HYPERLINK("x")', cuisine: '', jours: 'samedi', emplacement: 'javascript:alert(1)', site: 'pas une url',
@@ -210,4 +220,27 @@ test('Audience : identifiant de navigateur (128 bits) et HMAC', () => {
     assert.match(h, /^[0-9a-f]{32}$/);
     assert.notEqual(h, audience.hacher('autre-secret', id));
     assert.equal(h, audience.hacher('secret', id));
+});
+
+test("Photos d'origine : retrouvées par le nom (casse, accents, apostrophes ignorés)", () => {
+    const { chargerImages } = require('../src/photos');
+    const { cle } = require('../src/validation');
+    const parNom = chargerImages();
+    assert.equal(parNom.get(cle('SO PIAD’IN')), '/img/etablissements/so-piadin.jpg');
+    assert.equal(parNom.get(cle("l'Épicurieux")), '/img/etablissements/lepicurieux.jpg');
+    assert.equal(parNom.get(cle('Inconnu')), undefined);
+    assert.equal(chargerImages('/dossier/absent').size, 0);
+});
+
+test('Validation : photo (adresse locale uniquement) et carte de fidélité (oui / non)', () => {
+    const base = { nom: 'A', cuisine: 'B', jours: 'Lundi', emplacement: 'https://maps.app.goo.gl/x' };
+    assert.deepEqual(validerFoodtruck({ ...base, photo: '/img/etablissements/moya.jpg', fidelite: 'oui' }).erreurs, []);
+    assert.deepEqual(validerFoodtruck({ ...base, photo: '/photos/0123456789abcdef0123.jpg' }).erreurs, []);
+    for (const photo of ['https://ailleurs.fr/x.jpg', '/photos/../../etc/passwd', '/img/etablissements/x.svg', 'javascript:alert(1)']) {
+        assert.ok(validerFoodtruck({ ...base, photo }).erreurs.some(e => /Photo invalide/.test(e)), photo);
+    }
+    // Carte de fidélité : case à cocher, enregistrée « oui » ou vide
+    for (const [v, attendu] of [[true, 'oui'], ['oui', 'oui'], ['Oui', 'oui'], ['on', 'oui'], [false, ''], ['', ''], ['non', ''], ['=1+1', ''], [undefined, '']]) {
+        assert.equal(validerFoodtruck({ ...base, fidelite: v }).foodtruck.fidelite, attendu, String(v));
+    }
 });

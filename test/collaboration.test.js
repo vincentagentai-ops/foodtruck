@@ -511,7 +511,7 @@ test('Validation des avis (unitaire)', () => {
     assert.ok(validerAvis({ note: 3, plat: 'x'.repeat(61) }).erreurs);
 });
 
-test('Migration 3.1.0 -> 3.2.0 : colonne lieux_jours ajoutée, copie du fichier d\'origine, aucune perte', async () => {
+test('Migration 3.1.0 -> 3.5.0 : colonnes lieux_jours, photo et fidelite ajoutées, photo d\'origine, aucune perte', async () => {
     const { dossierTemporaire } = require('./outils');
     const { Stockage } = require('../src/stockage');
     const racine = dossierTemporaire();
@@ -526,9 +526,45 @@ test('Migration 3.1.0 -> 3.2.0 : colonne lieux_jours ajoutée, copie du fichier 
         assert.equal(stockage.migration.migre, true);
         assert.equal(fs.readFileSync(stockage.migration.copies[0], 'utf8'), csv310);
         const [ft] = await stockage.lireFoodtrucks();
-        assert.deepEqual([ft.id, ft.nom, ft.version, ft.horaires, ft.cree_le, ft.lieux_jours], ['abc234', 'Moya', '3', '11h-14h', '2026-10-01', '']);
-        assert.match(fs.readFileSync(path.join(dossier, 'foodtrucks.csv'), 'utf8').split('\n')[0], /,version,lieux_jours$/);
+        assert.deepEqual([ft.id, ft.nom, ft.version, ft.horaires, ft.cree_le, ft.lieux_jours, ft.fidelite], ['abc234', 'Moya', '3', '11h-14h', '2026-10-01', '', '']);
+        assert.equal(ft.photo, '/img/etablissements/moya.jpg'); // photo d'origine retrouvée par le nom
+        assert.match(fs.readFileSync(path.join(dossier, 'foodtrucks.csv'), 'utf8').split('\n')[0], /,version,lieux_jours,photo,fidelite$/);
     } finally {
         fs.rmSync(racine, { recursive: true, force: true });
     }
+});
+
+test('Photo : envoi (PNG/JPEG/WebP), publication avec la fiche, historique, restauration, service sécurisé', async () => {
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    const a = await t.navigateur();
+    const envoi = await a('POST', '/api/photos', { type: 'image/png', donnees: PNG });
+    assert.equal(envoi.statut, 201, envoi.texte);
+    assert.match(envoi.json.photo, /^\/photos\/[0-9a-f]{20}\.png$/);
+    assert.equal((await a('POST', '/api/photos', { type: 'image/png', donnees: PNG })).json.photo, envoi.json.photo); // même contenu, même fichier
+    assert.equal((await a('POST', '/api/photos', { donnees: Buffer.from('<svg onload=alert(1)>').toString('base64') })).statut, 400);
+
+    const servie = await t.appel('GET', envoi.json.photo);
+    assert.equal(servie.statut, 200);
+    assert.equal(servie.entetes.get('content-type'), 'image/png');
+    assert.match(servie.entetes.get('content-security-policy'), /sandbox/);
+    assert.equal((await t.appel('GET', '/photos/0123456789abcdef0123.png')).statut, 404);
+    assert.equal((await t.appel('GET', '/photos/..%2Ffoodtrucks.csv')).statut, 404);
+
+    const cree = (await a('POST', '/api/etablissements', fiche('Photogenique', { fidelite: true }))).json.etablissement;
+    assert.equal(cree.fidelite, 'oui');
+    avancer(1); // après le délai de grâce
+    const b = await t.navigateur();
+    const modif = await b('PUT', `/api/etablissements/${cree.id}`, { version: cree.version, etablissement: { ...cree, photo: envoi.json.photo } });
+    assert.equal(modif.statut, 200, modif.texte);
+    assert.equal(modif.json.etablissement.photo, envoi.json.photo);
+    // Adresse inconnue ou étrangère : refusée
+    const v = modif.json.etablissement.version;
+    assert.equal((await b('PUT', `/api/etablissements/${cree.id}`, { version: v, etablissement: { ...cree, photo: '/photos/ffffffffffffffffffff.jpg' } })).statut, 400);
+    assert.equal((await b('PUT', `/api/etablissements/${cree.id}`, { version: v, etablissement: { ...cree, photo: 'https://ailleurs.fr/p.jpg' } })).statut, 400);
+    // Historique : la photo est un champ comme les autres, restaurable
+    const hist = (await t.appel('GET', `/api/etablissements/${cree.id}/historique`)).json.entrees;
+    assert.ok(hist.some(e => e.champs.some(c => c.champ === 'photo' || c.libelle === 'Photo')));
+    const r = await b('POST', `/api/etablissements/${cree.id}/restaurer/${cree.version}`, { versionActuelle: v });
+    assert.equal(r.statut, 200, r.texte);
+    assert.equal(r.json.etablissement.photo, '');
 });

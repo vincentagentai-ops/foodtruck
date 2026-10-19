@@ -3,7 +3,7 @@
 
 (() => {
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-    const CHAMPS_TEXTE = ['nom', 'type', 'cuisine', 'categorie', 'lieu', 'lieux_jours', 'emplacement', 'horaires', 'prix', 'site', 'statut'];
+    const CHAMPS_TEXTE = ['nom', 'type', 'cuisine', 'categorie', 'lieu', 'lieux_jours', 'emplacement', 'horaires', 'prix', 'site', 'photo', 'statut'];
     const LISTES = { jours: 'f-jours', etiquettes: 'f-etiquettes', paiements: 'f-paiements' };
     let publies = [];
     let lieux = [];
@@ -42,6 +42,7 @@
     function remplirFormulaire(ft) {
         const form = document.getElementById('formEtablissement');
         for (const champ of CHAMPS_TEXTE) form.elements[champ].value = ft[champ] || '';
+        form.elements.fidelite.checked = ft.fidelite === 'oui';
         if (!form.elements.type.value) form.elements.type.value = 'foodtruck';
         if (!form.elements.statut.value) form.elements.statut.value = 'actif';
         for (const [champ, zone] of Object.entries(LISTES)) cocher(zone, ft[champ]);
@@ -50,6 +51,7 @@
     function lireFormulaire() {
         const form = document.getElementById('formEtablissement');
         const ft = Object.fromEntries(CHAMPS_TEXTE.map(c => [c, form.elements[c].value]));
+        ft.fidelite = form.elements.fidelite.checked ? 'oui' : '';
         for (const [champ, zone] of Object.entries(LISTES)) {
             ft[champ] = [...document.querySelectorAll(`#${zone} input:checked`)].map(c => c.value).join(';');
         }

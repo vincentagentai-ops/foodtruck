@@ -24,8 +24,9 @@ regroupe ceux dont l'emplacement n'est pas encore renseigné : utilisez alors le
 
 Chaque établissement indique :
 
+- une **photo** (cliquez dessus pour ouvrir la fiche) ;
 - le **nom** (cliquez dessus pour ouvrir sa fiche), avec les badges **Nouveau** (ajouté depuis moins de 15 jours),
-  **Restaurant** ou **Présence à confirmer** ;
+  **Restaurant**, **Présence à confirmer** ou **🎟 Carte de fidélité** ;
 - la **catégorie** et le type de cuisine, le **prix** indicatif, les **horaires**, les **étiquettes** (végétarien
   possible, halal…) et les **moyens de paiement** ;
 - la **note des collègues** (« ★ 4,3 (12 avis) ») — en dessous de 3 avis : « Pas encore assez d'avis » ;
@@ -34,10 +35,14 @@ Chaque établissement indique :
 - vos marques personnelles **✓ Déjà essayé** ou **À tester** (voir « Pour moi ») ;
 - les liens **Fiche, avis, présence**, **Site / menu** et **Plan Google Maps**.
 
-**Plan des emplacements** (si l'administrateur a déposé un plan du quartier) : dépliez-le au-dessus de la liste. Les
-lieux du jour y sont **numérotés** du plus proche au plus loin, avec les mêmes numéros que les titres de lieu de la
-liste ; cliquez sur un numéro pour aller au lieu dans la liste. Le plan fonctionne sans Internet ; les liens Google
-Maps restent disponibles. Le site se souvient si vous l'avez laissé déplié.
+**Plan des emplacements** (si l'administrateur a déposé un plan du quartier) : à gauche de la liste sur grand écran,
+au-dessus sur téléphone. Les lieux du jour y sont **numérotés** du plus proche au plus loin, avec les mêmes numéros que
+les titres de lieu de la liste ; cliquez sur un numéro pour aller au lieu dans la liste. **Cliquez sur le plan** (ou
+sur **⤢ Agrandir**) pour l'afficher en grand par-dessus la liste ; un second clic (ou Échap) le remet à sa taille. Le
+plan fonctionne sans Internet ; les liens Google Maps restent disponibles.
+
+**Rechercher et filtrer** est replié à l'ouverture de la page : cliquez dessus pour le déplier. **Au hasard** et
+**Effacer les filtres** restent toujours visibles.
 
 ## Rechercher, filtrer, choisir
 
@@ -114,6 +119,11 @@ peut l'améliorer.
 
 Sur la fiche : **Modifier les infos**, corrigez, **Enregistrer**. C'est publié tout de suite et enregistré dans
 l'historique.
+
+- **Photo** : **Choisir une photo…** (JPEG, PNG ou WebP ; elle est réduite automatiquement avant l'envoi), puis
+  **Enregistrer**. **Retirer la photo** l'enlève. Comme le reste, une photo remplacée se retrouve dans l'historique et
+  peut être restaurée. Préférez une photo du camion ou d'un plat, sans personne reconnaissable.
+- **Propose une carte de fidélité** : cochez la case si l'établissement en a une.
 
 Si un collègue a modifié la fiche pendant que vous la corrigiez, un encadré **« La fiche vient d'être modifiée par un
 collègue »** montre les différences (version actuelle / votre saisie). Cliquez sur **Repartir de la version
